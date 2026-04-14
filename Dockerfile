@@ -9,9 +9,6 @@ COPY . .
 
 RUN npm run build
 
-# DEBUG (optional)
-# RUN ls -la /app
-
 FROM nginx:alpine
 
 RUN rm -rf /usr/share/nginx/html/*
