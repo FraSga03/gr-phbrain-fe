@@ -21,7 +21,7 @@ export default function SidebarItem({
 
     return (
         <div
-            onClick={() => navigate(path)}
+            onClick={() => navigate(path + location.search)}
             className={`flex items-center cursor-pointer transition duration-150 half-rounded
                 border border-gray-500 bg-white shadow-sm
                 ${collapsed ? "justify-center px-2 py-3" : "gap-3 px-4 py-3"}

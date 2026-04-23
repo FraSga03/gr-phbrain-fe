@@ -6,6 +6,7 @@ type ButtonProps = {
     variant?: "primary" | "secondary";
     disabled?: boolean;
     onClick?: () => void;
+    name?: string;
 };
 
 export default function Button({
@@ -14,10 +15,12 @@ export default function Button({
    variant = "primary",
    disabled = false,
    onClick,
+   name,
 }: ButtonProps) {
     return (
         <button
             type={type}
+            name={name}
             onClick={onClick}
             disabled={disabled}
             className={`${variant === "primary" ? "button" : "button-secondary"} ${

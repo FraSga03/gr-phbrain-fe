@@ -1,5 +1,6 @@
 import { FaChevronLeft, FaSignOutAlt } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.tsx";
 
 type FooterProps = {
     onToggle: () => void;
@@ -8,13 +9,18 @@ type FooterProps = {
 
 export default function Footer({ onToggle, collapsed }: FooterProps) {
     const navigate = useNavigate();
+    const { user } = useAuth();
+
+    const imageLink = user
+        ? `https://ui-avatars.com/api/?name=${user.username.at(0)}${user.username.at(-1)}&background=1e40af&color=fff`
+        : null;
 
     function logout() {
         navigate("/login")
     }
 
     return (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 select-none">
             {collapsed && (
                 <div
                     onClick={() => logout()}
@@ -31,11 +37,15 @@ export default function Footer({ onToggle, collapsed }: FooterProps) {
                 className={`flex items-center h-full text-sm transition-all
             ${collapsed ? "justify-center" : "justify-start gap-4"}`}
             >
-                <div className="rounded-full h-10 w-10 bg-black shrink-0" />
+                <div className="rounded-full h-10 w-10 bg-gray-200 shrink-0 overflow-hidden">
+                    {imageLink && (
+                        <img src={imageLink} alt="User Image" className="w-full h-full object-cover rounded-full" />
+                    )}
+                </div>
 
                 {!collapsed && (
-                    <div className="flex flex-col justify-between grow h-full py-2 select-none">
-                        <div>Nome utente</div>
+                    <div className="flex flex-col justify-between grow h-full select-none">
+                        <div>{user?.username}</div>
                         <div
                             onClick={() => logout()}
                             className="hover:text-red-500 transition cursor-pointer"

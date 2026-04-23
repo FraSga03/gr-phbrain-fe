@@ -6,19 +6,27 @@ type TextAreaProps = {
     error?: FieldError;
     type?: string;
     placeholder?: string;
+    size?: "sm" | "md" | "lg";
+};
+
+const sizeLabelClasses = {
+    sm: "text-md!",
+    md: "text-lg!",
+    lg: "text-xl!",
 };
 
 export default function TextArea({
-  label,
-  registration,
-  error,
-  placeholder,
+    label,
+    registration,
+    error,
+    placeholder,
+    size = "md"
 }: TextAreaProps) {
     return (
         <div className="flex flex-col gap-1">
             {
                 label &&
-                <label className="label">{label}</label>
+                <label className={`label ${sizeLabelClasses[size]}`}>{label}</label>
             }
 
             <textarea

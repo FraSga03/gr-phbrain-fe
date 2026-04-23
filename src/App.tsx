@@ -3,16 +3,18 @@ import {
     RouterProvider,
     Navigate,
 } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
+import { AuthProvider } from "./context/AuthContext.tsx";
 
 import Login from "./pages/login/Login";
 import Admin from "./pages/admin/Admin";
 import Dashboard from "./pages/admin/Dashboard";
-import Record from "./pages/admin/Record";
-import Graph from "./pages/admin/Graph";
-import Merge from "./pages/admin/Merge";
+import Entity from "./pages/admin/Entity.tsx";
+import Graph from "./pages/admin/Graph.tsx";
 import Schema from "./pages/admin/Schema";
 import Prolog from "./pages/admin/Prolog";
 import Help from "./pages/admin/Help";
+import Relationship from "./pages/admin/Relationship.tsx";
 
 const router = createBrowserRouter([
     {
@@ -33,19 +35,19 @@ const router = createBrowserRouter([
                 handle: { title: "Dashboard" },
             },
             {
-                path: "record",
-                element: <Record />,
-                handle: { title: "Record" },
+                path: "entities",
+                element: <Entity />,
+                handle: { title: "Entities" },
+            },
+            {
+                path: "relationships",
+                element: <Relationship />,
+                handle: { title: "Relationships" },
             },
             {
                 path: "graph",
                 element: <Graph />,
                 handle: { title: "Graph" },
-            },
-            {
-                path: "merge",
-                element: <Merge />,
-                handle: { title: "Merge" },
             },
             {
                 path: "schema",
@@ -67,5 +69,10 @@ const router = createBrowserRouter([
 ]);
 
 export default function App() {
-    return <RouterProvider router={router} />;
+    return (
+        <AuthProvider>
+            <RouterProvider router={router} />
+            <Toaster position="bottom-right" />
+        </AuthProvider>
+    );
 }

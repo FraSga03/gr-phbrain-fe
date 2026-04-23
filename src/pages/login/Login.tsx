@@ -6,12 +6,14 @@ import { type LoginForm, loginSchema } from "../../schemas/LoginForm.ts";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { withSubmitLock } from "../../utils/withSubmitLock.ts";
+import { login } from "../../service/AuthService.ts";
 
 export default function Login() {
     const navigate = useNavigate();
     const {
         register,
         handleSubmit,
+        reset,
         formState: { errors, isSubmitting },
     } = useForm<LoginForm>({
         resolver: zodResolver(loginSchema),
@@ -21,8 +23,9 @@ export default function Login() {
     const onSubmit = withSubmitLock(async (data: LoginForm) => {
         console.log(data);
 
-        await new Promise((res) => setTimeout(res, 1000));
-        navigate("/admin")
+        login(data.username, data.password)
+            .then(() => navigate("/admin"))
+            .catch(() => reset());
     });
 
     return (
@@ -40,6 +43,7 @@ export default function Login() {
                         placeholder="Enter username"
                         error={errors.username}
                         registration={register("username")}
+                        size="lg"
                     />
 
                     <InputField
@@ -48,6 +52,7 @@ export default function Login() {
                         placeholder="Enter password"
                         error={errors.password}
                         registration={register("password")}
+                        size="lg"
                     />
                     <Button type="submit" disabled={isSubmitting}>
                         {isSubmitting ? "Loading..." : "Login"}

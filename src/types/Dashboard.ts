@@ -1,12 +1,16 @@
-export type Statistic = {
+export type Contribution = {
     contribution: string;
     total: number;
     active: number;
 }
 
 export type UserRank = {
-    rank: number;
     username: string;
     usage: number;
     trust: number;
 };
+
+export type Credit = {
+    bonus: number;
+    credits: number;
+}
