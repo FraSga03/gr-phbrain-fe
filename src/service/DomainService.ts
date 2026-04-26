@@ -3,6 +3,7 @@ import type { ClassNode } from "../types/ClassNode.ts";
 import type { EvaluationCreateDTO } from "../schemas/EvaluationForm.ts";
 import type { DomainHierarchy } from "../types/DomainClass.ts";
 import type { Instance } from "../types/Instance.ts";
+import type { SchemaEdit } from "../types/Schema.ts";
 
 const BASE_PATH = "/domains";
 
@@ -45,5 +46,32 @@ export async function saveFile(domain: string, id: string, dto: FormData) {
 
 export async function getDomainHierarchy(domain: string) {
     const res = await api.get<DomainHierarchy>(`${BASE_PATH}/hierarchy/${domain}`);
+    return res.data;
+}
+
+export async function getDomainClasses(domain: string) {
+    const res = await api.get<string[]>(`${BASE_PATH}/classes/${domain}`);
+    return res.data;
+}
+
+export async function download(domain: string, schemaEdit: SchemaEdit[], format: string) {
+    const res = await api.post<string[]>(`${BASE_PATH}/download/${domain}`, {
+        schemaEdit,
+        format,
+    });
+    return res.data;
+}
+
+export async function upload(domain: string, dto: FormData) {
+    const res = await api.post<string[]>(`${BASE_PATH}/upload/${domain}`, dto, {
+        headers: dto instanceof FormData ? { "Content-Type": "multipart/form-data" } : {}
+    });
+    return res.data;
+}
+
+export async function downloadGraph(domain: string, dto: FormData) {
+    const res = await api.post<string[]>(`${BASE_PATH}/download/${domain}`, dto, {
+        headers: dto instanceof FormData ? { "Content-Type": "multipart/form-data" } : {}
+    });
     return res.data;
 }

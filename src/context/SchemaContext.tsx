@@ -11,6 +11,7 @@ type SchemaContextValue = {
     setSelectedProperty: (name: string | null) => void;
     selectedRelationshipId: string | null;
     setSelectedRelationshipId: (name: string | null) => void;
+    clearRelationshipSelection: () => void;
 };
 
 const SchemaContext = createContext<SchemaContextValue | undefined>(undefined);
@@ -73,6 +74,18 @@ export function SchemaProvider({ children }: { children: ReactNode }) {
         });
     }
 
+    // Clear relationship + property in a single setSearchParams call. React Router's
+    // updater receives `prev` from the hook closure, so two sequential setters would
+    // each operate on the original URL and clobber each other.
+    function clearRelationshipSelection() {
+        setSearchParams((prev) => {
+            const next = new URLSearchParams(prev);
+            next.delete("selectedSchemaRelationshipId");
+            next.delete("selectedSchemaProperty");
+            return next;
+        });
+    }
+
     const prevDomainRef = useRef<string | null>(selectedDomain);
     useEffect(() => {
         if (prevDomainRef.current === selectedDomain) return;
@@ -91,7 +104,7 @@ export function SchemaProvider({ children }: { children: ReactNode }) {
     }, [selectedDomain]);
 
     return (
-        <SchemaContext.Provider value={{ selectedClasses, setSelectedClasses, selectedClass, setSelectedClass, selectedProperty, setSelectedProperty, selectedRelationshipId, setSelectedRelationshipId }}>
+        <SchemaContext.Provider value={{ selectedClasses, setSelectedClasses, selectedClass, setSelectedClass, selectedProperty, setSelectedProperty, selectedRelationshipId, setSelectedRelationshipId, clearRelationshipSelection }}>
             {children}
         </SchemaContext.Provider>
     );

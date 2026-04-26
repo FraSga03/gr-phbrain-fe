@@ -12,6 +12,7 @@ import Spinner from "../../components/Spinner.tsx";
 import { DomainProvider } from "../../context/DomainContext.tsx";
 import { SelectionProvider } from "../../context/SelectionContext.tsx";
 import { RelationshipProvider } from "../../context/RelationshipContext.tsx";
+import { GraphProvider } from "../../context/GraphContext.tsx";
 
 const sidebarItems = [
     { label: "Dashboard", icon: <FaHome size={20} />, path: "/admin" },
@@ -55,13 +56,15 @@ export default function Admin() {
             <DomainProvider>
                 <SelectionProvider>
                     <RelationshipProvider>
-                        <main className="flex flex-col flex-1 bg-gray-50 min-h-0">
-                            <TopBar title={title} />
+                        <GraphProvider>
+                            <main className="flex flex-col flex-1 bg-gray-50 min-h-0">
+                                <TopBar title={title} />
 
-                            <div className="flex-1 overflow-y-auto p-2 min-h-0">
-                                <Outlet />
-                            </div>
-                        </main>
+                                <div className="flex-1 overflow-y-auto p-2 min-h-0">
+                                    <Outlet />
+                                </div>
+                            </main>
+                        </GraphProvider>
                     </RelationshipProvider>
                 </SelectionProvider>
             </DomainProvider>

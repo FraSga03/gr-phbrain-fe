@@ -39,6 +39,9 @@ export function DomainProvider({ children }: { children: ReactNode }) {
             next.delete("selectedObjectInstanceId");
             next.delete("selectedRelationship");
 
+            next.delete("graphSelectedRelationships");
+            next.delete("graphSelectedInstances");
+
             return next;
         });
     }

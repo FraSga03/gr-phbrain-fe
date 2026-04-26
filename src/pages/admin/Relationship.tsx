@@ -1,12 +1,13 @@
 import Card from "../../components/Card.tsx";
 import { useDomain } from "../../context/DomainContext.tsx";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import type { Option } from "../../types/Select.ts";
 import { getSubclasses } from "../../service/DomainService.ts";
 import ClassSelector from "../../components/ClassSelector.tsx";
 import InstanceSelector from "../../components/InstanceSelector.tsx";
 import { useRelationship, buildRelationshipParams } from "../../context/RelationshipContext.tsx";
+import { useGraph } from "../../context/GraphContext.tsx";
 import type { ClassNode } from "../../types/ClassNode.ts";
 import { FaArrowRightArrowLeft } from "react-icons/fa6";
 import RelationshipForm from "../../components/RelationshipForm.tsx";
@@ -15,6 +16,7 @@ import type { Relationship as RelationshipType } from "../../types/Relationship.
 export default function Relationship() {
     const navigate = useNavigate();
     const { selectedDomain } = useDomain();
+    const location = useLocation();
     const {
         selectedSubjectClasses,
         selectedSubjectInstanceId,
@@ -31,6 +33,19 @@ export default function Relationship() {
         selectedRelationshipInstanceId,
         setSelectedRelationshipInstanceId
     } = useRelationship();
+
+    const { selectedInstances: graphSelectedInstances, setSelectedInstances: setGraphSelectedInstances } = useGraph();
+
+    const goToGraphWithInstance = (instanceId: string | null) => {
+        if (!instanceId) return;
+        const next = graphSelectedInstances.includes(instanceId)
+            ? graphSelectedInstances
+            : [...graphSelectedInstances, instanceId];
+        setGraphSelectedInstances(next);
+        const qParams = new URLSearchParams(location.search);
+        qParams.set("graphSelectedInstances", next.join(","));
+        navigate(`/admin/graph?${qParams.toString()}`);
+    };
 
     const [currentSubjectClass, setCurrentSubjectClass] = useState<ClassNode | undefined>(undefined);
     const [currentObjectClass, setCurrentObjectClass] = useState<ClassNode | undefined>(undefined);
@@ -136,6 +151,7 @@ export default function Relationship() {
                                 onSelectInstance={(id) => onInstanceSelect(id, true)}
                                 buttons={[
                                     { label: "Object", onClick: () => switchRoles(true) },
+                                    { label: "Graph", onClick: () => goToGraphWithInstance(selectedSubjectInstanceId) },
                                     { label: "Clear", onClick: () => setSelectedSubjectInstanceId(null) }
                                 ]}
                             />
@@ -174,6 +190,7 @@ export default function Relationship() {
                                 onSelectInstance={(id) => onInstanceSelect(id, false)}
                                 buttons={[
                                     { label: "Subject", onClick: () => switchRoles(false) },
+                                    { label: "Graph", onClick: () => goToGraphWithInstance(selectedObjectInstanceId) },
                                     { label: "Clear", onClick: () => setSelectedObjectInstanceId(null) }
                                 ]}
                             />

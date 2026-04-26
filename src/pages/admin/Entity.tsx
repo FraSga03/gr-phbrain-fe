@@ -2,7 +2,7 @@ import Card from "../../components/Card.tsx";
 import { useDomain } from "../../context/DomainContext.tsx";
 import { useSelection } from "../../context/SelectionContext.tsx";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import type { Option } from "../../types/Select.ts";
 import type { ClassNode } from "../../types/ClassNode.ts";
 import { getInstanceByIdAndDomain, getSubclasses } from "../../service/DomainService.ts";
@@ -14,10 +14,13 @@ import ClassSelector from "../../components/ClassSelector.tsx";
 import InstanceSelector from "../../components/InstanceSelector.tsx";
 import type { InstanceButton } from "../../components/InstanceSelector.tsx";
 import { buildRelationshipParams } from "../../context/RelationshipContext.tsx";
+import { useGraph } from "../../context/GraphContext.tsx";
 
 export default function Entity() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { selectedDomain } = useDomain();
+    const { selectedInstances: graphSelectedInstances, setSelectedInstances: setGraphSelectedInstances } = useGraph();
     const {
         selectedClasses,
         selectedInstanceId,
@@ -62,6 +65,17 @@ export default function Entity() {
         navigate(`/admin/relationships?${params}`);
     };
 
+    const goToGraphWithInstance = () => {
+        if (!selectedInstanceId) return;
+        const next = graphSelectedInstances.includes(selectedInstanceId)
+            ? graphSelectedInstances
+            : [...graphSelectedInstances, selectedInstanceId];
+        setGraphSelectedInstances(next);
+        const qParams = new URLSearchParams(location.search);
+        qParams.set("graphSelectedInstances", next.join("-"));
+        navigate(`/admin/graph?${qParams.toString()}`);
+    };
+
     const instanceButtons: InstanceButton[] = [
         {
             label: "Subject",
@@ -70,6 +84,10 @@ export default function Entity() {
         {
             label: "Object",
             onClick: () => navigateToRelationship(false)
+        },
+        {
+            label: "Graph",
+            onClick: () => goToGraphWithInstance()
         }
     ];
 

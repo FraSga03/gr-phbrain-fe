@@ -8,6 +8,8 @@ import InputField from "./InputField.tsx";
 import Button from "./Button.tsx";
 import { useForm, type FieldError } from "react-hook-form";
 import toast from "react-hot-toast";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useGraph } from "../context/GraphContext.tsx";
 
 type RelationshipFormProps = {
     subject: ClassNode;
@@ -23,12 +25,27 @@ type RelationshipFormProps = {
 
 export default function RelationshipForm({ subject, object, domain, onRelationshipSelect, relationshipId, instanceId, onInstanceSelect, subjectId, objectId }: RelationshipFormProps) {
 
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { selectedRelationships: graphSelectedRelationships, setSelectedRelationships: setGraphSelectedRelationships } = useGraph();
+
+    const goToGraphWithRelationship = (relationshipInstanceId: string | null) => {
+        if (!relationshipInstanceId) return;
+        const next = graphSelectedRelationships.includes(relationshipInstanceId)
+            ? graphSelectedRelationships
+            : [...graphSelectedRelationships, relationshipInstanceId];
+        setGraphSelectedRelationships(next);
+        const qParams = new URLSearchParams(location.search);
+        qParams.set("graphSelectedRelationships", next.join("-"));
+        navigate(`/admin/graph?${qParams.toString()}`);
+    };
+
     const [relationships, setRelationships] = useState<Relationship[]>([]);
     const [relationshipOptions, setRelationshipOptions] = useState<Option[]>([]);
 
     const [currentRelationship, setCurrentRelationship] = useState<Relationship | null>(null);
     const currentRelationshipOptions: Option[] = useMemo(() => {
-        return currentRelationship?.instances?.map((inst: RelationshipInstance) => ({ value: inst.id, label: `${inst.subject.name} - ${inst.subject.__id} -> ${inst.object.name} - ${inst.object.__id}`})) ?? []
+        return currentRelationship?.instances?.map((inst: RelationshipInstance) => ({ value: inst.__id, label: `${inst.subject.name} - ${inst.subject.__id} -> ${inst.object.name} - ${inst.object.__id}`})) ?? []
     }, [currentRelationship])
 
     const [selectedInstance, setSelectedInstance] = useState<RelationshipInstance | null>(null);
@@ -92,7 +109,7 @@ export default function RelationshipForm({ subject, object, domain, onRelationsh
             await saveRelationship(domain, subjectId, objectId, data);
             toast.success("Relationship created");
         } else if (selectedInstance) {
-            await editRelationship(domain, selectedInstance.id, data);
+            await editRelationship(domain, selectedInstance.__id, data);
             toast.success("Relationship updated");
         }
     }
@@ -133,13 +150,24 @@ export default function RelationshipForm({ subject, object, domain, onRelationsh
                                     No instances available for this relationship
                                 </div>
                             ) : (
-                                <Select
-                                    options={currentRelationshipOptions}
-                                    placeholder="Select a relationship instance"
-                                    onChange={onInstanceSelect}
-                                    value={instanceId ?? undefined}
-                                    disabled={!currentRelationship}
-                                />
+                                <div className="flex gap-2 items-center">
+                                    <div className="flex-1">
+                                        <Select
+                                            options={currentRelationshipOptions}
+                                            placeholder="Select a relationship instance"
+                                            onChange={onInstanceSelect}
+                                            value={instanceId ?? undefined}
+                                            disabled={!currentRelationship}
+                                        />
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        disabled={!instanceId}
+                                        onClick={() => goToGraphWithRelationship(instanceId)}
+                                    >
+                                        Graph
+                                    </Button>
+                                </div>
                             )}
                         </div>
                     )}

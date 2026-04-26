@@ -25,7 +25,7 @@ export type PossibleRelationship = {
 }
 
 export type RelationshipInstance = {
-    id: string;
+    __id: string;
     name: string;
     subject: ClassNodeInstance;
     object: ClassNodeInstance;
