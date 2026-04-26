@@ -15,6 +15,8 @@ import Schema from "./pages/admin/Schema";
 import Prolog from "./pages/admin/Prolog";
 import Help from "./pages/admin/Help";
 import Relationship from "./pages/admin/Relationship.tsx";
+import Profile from "./pages/admin/Profile.tsx";
+import { SchemaProvider } from "./context/SchemaContext.tsx";
 
 const router = createBrowserRouter([
     {
@@ -51,7 +53,11 @@ const router = createBrowserRouter([
             },
             {
                 path: "schema",
-                element: <Schema />,
+                element: (
+                    <SchemaProvider>
+                        <Schema />
+                    </SchemaProvider>
+                ),
                 handle: { title: "Schema" },
             },
             {
@@ -63,6 +69,11 @@ const router = createBrowserRouter([
                 path: "help",
                 element: <Help />,
                 handle: { title: "Help" },
+            },
+            {
+                path: "profile",
+                element: <Profile />,
+                handle: { title: "Profile" },
             },
         ],
     },

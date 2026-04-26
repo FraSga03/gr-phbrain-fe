@@ -36,7 +36,6 @@ export default function AttachmentsForm({ attachments, domain, instanceId }: Att
         formData.append("description", data.description);
 
         await saveFile(domain, instanceId, formData as never);
-        console.log("Attachment uploaded:", { domain, instanceId, data });
         toast.success("Attachment uploaded successfully");
         reset();
     }

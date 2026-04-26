@@ -1,6 +1,8 @@
 import api from "./api.ts";
 import type { ClassNode } from "../types/ClassNode.ts";
 import type { EvaluationCreateDTO } from "../schemas/EvaluationForm.ts";
+import type { DomainHierarchy } from "../types/DomainClass.ts";
+import type { Instance } from "../types/Instance.ts";
 
 const BASE_PATH = "/domains";
 
@@ -14,7 +16,7 @@ export async function getSubclasses(domain: string, targetClass?: string): Promi
     return res.data;
 }
 
-export async function getInstanceByIdAndDomain(domain: string, id: string): Promise<any> {
+export async function getInstanceByIdAndDomain(domain: string, id: string): Promise<Instance> {
     const res = await api.get(`${BASE_PATH}/${domain}/${id}`);
     return res.data;
 }
@@ -38,5 +40,10 @@ export async function saveFile(domain: string, id: string, dto: FormData) {
     const res = await api.post(`${BASE_PATH}/instance/${domain}/${id}/file`, dto, {
         headers: dto instanceof FormData ? { "Content-Type": "multipart/form-data" } : {}
     });
+    return res.data;
+}
+
+export async function getDomainHierarchy(domain: string) {
+    const res = await api.get<DomainHierarchy>(`${BASE_PATH}/hierarchy/${domain}`);
     return res.data;
 }

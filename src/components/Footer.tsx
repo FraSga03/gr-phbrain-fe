@@ -1,5 +1,5 @@
 import { FaChevronLeft, FaSignOutAlt } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.tsx";
 
 type FooterProps = {
@@ -9,11 +9,8 @@ type FooterProps = {
 
 export default function Footer({ onToggle, collapsed }: FooterProps) {
     const navigate = useNavigate();
-    const { user } = useAuth();
-
-    const imageLink = user
-        ? `https://ui-avatars.com/api/?name=${user.username.at(0)}${user.username.at(-1)}&background=1e40af&color=fff`
-        : null;
+    const location = useLocation();
+    const { user, profilePicture } = useAuth();
 
     function logout() {
         navigate("/login")
@@ -37,15 +34,23 @@ export default function Footer({ onToggle, collapsed }: FooterProps) {
                 className={`flex items-center h-full text-sm transition-all
             ${collapsed ? "justify-center" : "justify-start gap-4"}`}
             >
-                <div className="rounded-full h-10 w-10 bg-gray-200 shrink-0 overflow-hidden">
-                    {imageLink && (
-                        <img src={imageLink} alt="User Image" className="w-full h-full object-cover rounded-full" />
+                <div
+                    onClick={() => navigate("/admin/profile" + location.search)}
+                    className="rounded-full h-10 w-10 bg-gray-200 shrink-0 overflow-hidden cursor-pointer hover:opacity-80 transition"
+                >
+                    {profilePicture && (
+                        <img src={profilePicture} alt="User Image" className="w-full h-full object-cover rounded-full" />
                     )}
                 </div>
 
                 {!collapsed && (
                     <div className="flex flex-col justify-between grow h-full select-none">
-                        <div>{user?.username}</div>
+                        <div
+                            onClick={() => navigate("/admin/profile")}
+                            className="cursor-pointer hover:text-accent transition"
+                        >
+                            {user?.username}
+                        </div>
                         <div
                             onClick={() => logout()}
                             className="hover:text-red-500 transition cursor-pointer"

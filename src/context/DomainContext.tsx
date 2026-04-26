@@ -28,6 +28,11 @@ export function DomainProvider({ children }: { children: ReactNode }) {
             next.delete("selectedClasses");
             next.delete("instanceId");
 
+            next.delete("selectedSchemaClasses");
+            next.delete("selectedSchemaClass");
+            next.delete("selectedSchemaProperty");
+            next.delete("selectedSchemaRelationshipId");
+
             next.delete("selectedSubjectClasses");
             next.delete("selectedSubjectInstanceId");
             next.delete("selectedObjectClasses");

@@ -33,7 +33,6 @@ export default function AttachmentForm({ onSubmit }: AttachmentFormProps) {
             if (onSubmit) {
                 await onSubmit(data);
             } else {
-                console.log("Attachments:", data);
                 toast.success("Files uploaded successfully");
             }
             reset();

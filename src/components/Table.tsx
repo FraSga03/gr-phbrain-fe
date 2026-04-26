@@ -10,6 +10,7 @@ export default function Table<T>({
     pagination = false,
     paginatedResult,
     onPageChange,
+    onRowClick
 }: TableProps<T>) {
     const [page, setPage] = useState(1);
 
@@ -51,6 +52,9 @@ export default function Table<T>({
         if (col.key === "index") {
             return (currentPage - 1) * (isServerMode ? paginatedResult!.limit : pageSize) + index + 1;
         }
+        if (col.key === "empty") {
+            return col.render ? col.render(undefined as T[keyof T], row) : null;
+        }
         if (col.render) {
             return col.render(row[col.key as keyof T], row);
         }
@@ -63,7 +67,7 @@ export default function Table<T>({
         <div className="w-full min-h-[350px] flex flex-col justify-between">
             <div className="flex-1 overflow-auto border rounded-md bg-white">
                 <table className="w-full text-left border-collapse">
-                    <thead className="bg-gray-100 border-b soft-border">
+                    <thead className="bg-gray-100 border-b soft-border sticky top-0 z-10">
                     <tr>
                         {columns.map((col) => (
                             <th
@@ -77,10 +81,17 @@ export default function Table<T>({
                     </thead>
 
                     <tbody>
-                    {rows.map((row: T, i: number) => (
+                    {rows.map((row: T, i: number) => {
+                        const isSelected = (row as { selected?: boolean }).selected === true;
+                        return (
                         <tr
                             key={i}
-                            className={`${i + 1 !== rows.length ? 'border-b soft-border' : ''} hover:bg-gray-50 transition`}
+                            className={`${i + 1 !== rows.length ? 'border-b soft-border' : ''}
+                                ${onRowClick ? "cursor-pointer" :  ''}
+                                ${isSelected ? "bg-accent-bg text-accent font-medium" : "hover:bg-gray-50"}
+                                transition`
+                            }
+                            onClick={() => onRowClick?.(row)}
                         >
                             {columns.map((col) => (
                                 <td key={String(col.key)} className="p-3 text-sm">
@@ -88,7 +99,8 @@ export default function Table<T>({
                                 </td>
                             ))}
                         </tr>
-                    ))}
+                        );
+                    })}
                     </tbody>
                 </table>
             </div>

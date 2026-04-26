@@ -21,8 +21,6 @@ export default function Login() {
     })
 
     const onSubmit = withSubmitLock(async (data: LoginForm) => {
-        console.log(data);
-
         login(data.username, data.password)
             .then(() => navigate("/admin"))
             .catch(() => reset());

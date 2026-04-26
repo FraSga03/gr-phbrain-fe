@@ -10,7 +10,7 @@ import { useRelationship, buildRelationshipParams } from "../../context/Relation
 import type { ClassNode } from "../../types/ClassNode.ts";
 import { FaArrowRightArrowLeft } from "react-icons/fa6";
 import RelationshipForm from "../../components/RelationshipForm.tsx";
-import type { RelationshipOverview } from "../../types/RelationshipOverview.ts";
+import type { Relationship as RelationshipType } from "../../types/Relationship.ts";
 
 export default function Relationship() {
     const navigate = useNavigate();
@@ -26,7 +26,10 @@ export default function Relationship() {
         setSelectedObjectClasses,
 
         selectedRelationship,
-        setSelectedRelationship
+        setSelectedRelationship,
+
+        selectedRelationshipInstanceId,
+        setSelectedRelationshipInstanceId
     } = useRelationship();
 
     const [currentSubjectClass, setCurrentSubjectClass] = useState<ClassNode | undefined>(undefined);
@@ -103,7 +106,7 @@ export default function Relationship() {
         }
     };
 
-    function onRelSelect(currRelationship: RelationshipOverview) {
+    function onRelSelect(currRelationship: RelationshipType) {
         setSelectedRelationship(currRelationship.name);
 
         if (!currentObjectClass) {
@@ -132,7 +135,8 @@ export default function Relationship() {
                                 selectedInstanceId={selectedSubjectInstanceId}
                                 onSelectInstance={(id) => onInstanceSelect(id, true)}
                                 buttons={[
-                                    { label: "Object", onClick: () => switchRoles(true) }
+                                    { label: "Object", onClick: () => switchRoles(true) },
+                                    { label: "Clear", onClick: () => setSelectedSubjectInstanceId(null) }
                                 ]}
                             />
                         </div>
@@ -169,7 +173,8 @@ export default function Relationship() {
                                 selectedInstanceId={selectedObjectInstanceId}
                                 onSelectInstance={(id) => onInstanceSelect(id, false)}
                                 buttons={[
-                                    { label: "Subject", onClick: () => switchRoles(false) }
+                                    { label: "Subject", onClick: () => switchRoles(false) },
+                                    { label: "Clear", onClick: () => setSelectedObjectInstanceId(null) }
                                 ]}
                             />
                         </div>
@@ -178,7 +183,7 @@ export default function Relationship() {
             </div>
 
             <div className="col-span-2">
-                <Card title="Relationship">
+                <Card>
                     {
                         (selectedSubjectClasses.length >= 1 && selectedDomain && currentSubjectClass) ?
                             <RelationshipForm
@@ -187,6 +192,12 @@ export default function Relationship() {
                                 domain={selectedDomain}
                                 onRelationshipSelect={onRelSelect}
                                 relationshipId={selectedRelationship}
+                                subjectId={selectedSubjectInstanceId}
+                                objectId={selectedObjectInstanceId}
+                                instanceId={selectedRelationshipInstanceId}
+                                onInstanceSelect={(instance) => {
+                                    setSelectedRelationshipInstanceId(instance)
+                                }}
                             /> :
                             <div>Select both subject and object</div>
                     }

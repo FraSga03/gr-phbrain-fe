@@ -41,7 +41,6 @@ export default function RecordForm({ selectedInstance, currentClass, currentDoma
     const saveInstance = async (data: Record) => {
         saveInstanceAPI(currentDomain, currentClass?.name ?? '', data as never)
             .then(() => {
-                console.log("Instance saved:", { domain: currentDomain, class: currentClass?.name, data });
                 toast.success("Instance saved");
                 reset(Object.fromEntries(Object.keys(currentClass?.properties ?? {}).map(key => [key, null])));
                 clearErrors();
@@ -51,7 +50,6 @@ export default function RecordForm({ selectedInstance, currentClass, currentDoma
     const editInstance = async (data: Record) => {
         editInstanceAPI(currentDomain, selectedInstance?.__id ?? '', data as never)
             .then(() => {
-                console.log("Instance updated:", { domain: currentDomain, instanceId: selectedInstance?.__id, data });
                 toast.success("Instance updated");
                 clearErrors();
             })

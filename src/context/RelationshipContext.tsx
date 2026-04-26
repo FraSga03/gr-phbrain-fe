@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useDomain } from "./DomainContext.tsx";
 
@@ -56,6 +56,9 @@ type RelationshipContextValue = {
 
     selectedRelationship: string | null;
     setSelectedRelationship: (id: string | null) => void;
+
+    selectedRelationshipInstanceId: string | null;
+    setSelectedRelationshipInstanceId: (id: string | null) => void;
 };
 
 const RelationshipContext = createContext<RelationshipContextValue | undefined>(undefined);
@@ -65,13 +68,23 @@ export function RelationshipProvider({ children }: { children: ReactNode }) {
     const { selectedDomain } = useDomain();
     const prevDomainRef = useRef<string | null>(null);
 
-    const selectedSubjectClasses = searchParams.get("selectedSubjectClasses")?.split("-").filter(Boolean) ?? [];
+    const subjectClassesParam = searchParams.get("selectedSubjectClasses");
+    const objectClassesParam = searchParams.get("selectedObjectClasses");
+
+    const selectedSubjectClasses = useMemo(
+        () => subjectClassesParam?.split("-").filter(Boolean) ?? [],
+        [subjectClassesParam],
+    );
     const selectedSubjectInstanceId = searchParams.get("selectedSubjectInstanceId");
 
-    const selectedObjectClasses = searchParams.get("selectedObjectClasses")?.split("-").filter(Boolean) ?? [];
+    const selectedObjectClasses = useMemo(
+        () => objectClassesParam?.split("-").filter(Boolean) ?? [],
+        [objectClassesParam],
+    );
     const selectedObjectInstanceId = searchParams.get("selectedObjectInstanceId");
 
     const selectedRelationship = searchParams.get("selectedRelationship");
+    const selectedRelationshipInstanceId = searchParams.get("selectedRelationshipInstanceId");
 
     function setSelectedClasses(newSelectedClasses: string[], isSubject: boolean) {
         setSearchParams((prev) => {
@@ -81,13 +94,19 @@ export function RelationshipProvider({ children }: { children: ReactNode }) {
             }
 
             const next = new URLSearchParams(prev);
-            if (newSelectedClasses.length > 0) {
-                next.set(param1, newSelectedClasses.join("-"));
+            const newValue = newSelectedClasses.length > 0 ? newSelectedClasses.join("-") : null;
+            const currentValue = prev.get(param1);
+
+            if (newValue) {
+                next.set(param1, newValue);
             } else {
                 next.delete(param1);
             }
 
-            next.delete(param2);
+            // Only clear the matching instance if the class path actually changed.
+            if (currentValue !== newValue) {
+                next.delete(param2);
+            }
             return next;
         });
     }
@@ -106,6 +125,9 @@ export function RelationshipProvider({ children }: { children: ReactNode }) {
 
             const next = new URLSearchParams(prev);
             if (instanceId) {
+                if (prev.get(param1) !== instanceId) {
+                    next.delete("selectedRelationshipInstanceId");
+                }
                 next.set(param1, instanceId);
             } else {
                 next.delete(param1);
@@ -122,14 +144,37 @@ export function RelationshipProvider({ children }: { children: ReactNode }) {
         setSelectedInstanceId(instanceId, false);
     }
 
+    function setSelectedRelationshipInstanceId(id: string | null) {
+        setSearchParams((prev) => {
+            const next = new URLSearchParams(prev);
+            if (id) {
+                next.set("selectedRelationshipInstanceId", id);
+                // Picking a relationship instance is mutually exclusive with picking
+                // subject/object instances — clear them in the same update so the
+                // URL stays consistent (multiple setSearchParams calls in a row
+                // would clobber each other since they share the same closure).
+                next.delete("selectedSubjectInstanceId");
+                next.delete("selectedObjectInstanceId");
+            } else {
+                next.delete("selectedRelationshipInstanceId");
+            }
+            return next;
+        });
+    }
+
     function setSelectedRelationship(relationship: string | null) {
         setSearchParams((prev) => {
-
             const next = new URLSearchParams(prev);
+            const current = prev.get("selectedRelationship");
             if (relationship) {
                 next.set("selectedRelationship", relationship);
             } else {
                 next.delete("selectedRelationship");
+            }
+            // Only clear the instance pick when the relationship actually changes,
+            // not on idempotent re-sets (which can fire when the dropdown re-renders).
+            if (current !== relationship) {
+                next.delete("selectedRelationshipInstanceId");
             }
             return next;
         });
@@ -145,6 +190,7 @@ export function RelationshipProvider({ children }: { children: ReactNode }) {
                 next.delete("selectedSubjectInstanceId");
                 next.delete("selectedObjectInstanceId");
                 next.delete("selectedRelationship");
+                next.delete("selectedRelationshipInstanceId");
 
                 return next;
             });
@@ -165,7 +211,10 @@ export function RelationshipProvider({ children }: { children: ReactNode }) {
             setSelectedObjectInstanceId,
 
             selectedRelationship,
-            setSelectedRelationship
+            setSelectedRelationship,
+
+            selectedRelationshipInstanceId,
+            setSelectedRelationshipInstanceId
         }}>
             {children}
         </RelationshipContext.Provider>
