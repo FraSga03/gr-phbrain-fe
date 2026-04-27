@@ -1,6 +1,5 @@
-import { useState, useCallback, useEffect, Fragment } from 'react';
-import { ReactFlow, applyNodeChanges, applyEdgeChanges, addEdge, Handle, Position, type NodeChange, type EdgeChange, type NodeProps } from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
+import { useState, useCallback, useEffect } from 'react';
+import { applyNodeChanges, applyEdgeChanges, addEdge, type NodeChange, type EdgeChange } from '@xyflow/react';
 import Card from "../../components/Card";
 import { useGraph } from "../../context/GraphContext.tsx";
 import type { Instance } from "../../types/Instance.ts";
@@ -10,48 +9,57 @@ import { useDomain } from "../../context/DomainContext.tsx";
 import { getRelationshipInstance } from "../../service/RelationshipService.ts";
 import type { Column } from "../../types/Table.ts";
 import Table from "../../components/Table.tsx";
-import Button from "../../components/Button.tsx";
-import Select from "../../components/Select.tsx";
-import { FaXmark } from "react-icons/fa6";
-
-function CircularNode({ data }: NodeProps) {
-    return (
-        <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-gray-700 bg-white text-center text-sm shadow">
-            <Handle type="target" position={Position.Top} />
-            {(data as { label: string }).label}
-            <Handle type="source" position={Position.Bottom} />
-        </div>
-    );
-}
-
-
-// const initialNodes = [
-//     {id: 'n1', type: 'circular', position: {x: 0, y: 0}, data: {label: 'Node 1'}},
-//     {id: 'n2', type: 'circular', position: {x: 0, y: 150}, data: {label: 'Node 2'}},
-// ];
-// const initialEdges = [{id: 'n1-n2', source: 'n1', target: 'n2'}];
+import { generateGraph, getNodeCentrality, getNodeLinkPrediction } from "../../service/GraphService.ts";
+import GraphCanvas, { layoutWithDagre } from "../../components/GraphCanvas.tsx";
+import GraphProperties from "../../components/GraphProperties.tsx";
+import { FaTrash } from "react-icons/fa";
 
 export default function Graph() {
     const [nodes, setNodes] = useState<any[]>([]);
     const [edges, setEdges] = useState<any[]>([]);
-    const nodeTypes = { circular: CircularNode };
-    const { setSelectedInstances, selectedInstances, selectedRelationships, setSelectedRelationships } = useGraph();
+
+    const {
+        setSelectedInstances,
+        setSelectedRelationships,
+        selectedInstances,
+        selectedRelationships,
+        detailInstances: detailInstanceIds,
+        setDetailInstances: setDetailInstanceIds,
+        detailRelationships: detailRelationshipIds,
+        setDetailRelationships: setDetailRelationshipIds,
+    } = useGraph();
     const { selectedDomain } = useDomain();
+
     const [instances, setInstances] = useState<Instance[]>([]);
     const [relationshipInstances, setRelationshipInstances] = useState<RelationshipInstance[]>([]);
+    const [detailInstances, setDetailInstances] = useState<Instance[]>([]);
+    const [detailRelationshipInstances, setDetailRelationshipInstances] = useState<RelationshipInstance[]>([]);
+
     const [isPropertyOpen, setIsPropertyOpen] = useState<{ [key: string]: boolean }>({});
+    const [centrality, setCentrality] = useState<{ [key: string]: number }>({});
+    const [linkPrediction, setLinkPrediction] = useState<{ [key: string]: number }>({});
+
+    const linkPredictionAlgorithmOptions = [
+        { label: "Resource Allocation", value: "resourceAllocation" },
+        { label: "Common Neighbors", value: "commonNeighbors" },
+        { label: "Katz", value: "katz" },
+        { label: "AdamicAdar", value: "adamicAdar" },
+    ];
+
+    const centralityAlgorithmOptions = [
+        { label: "Closeness", value: "closeness" },
+        { label: "Betweeness", value: "betweeness" },
+        { label: "PageRank", value: "pageRank" },
+        { label: "Harmonic", value: "harmonic" },
+        { label: "Katz", value: "katz" },
+    ];
 
     const onNodesChange = useCallback(
-        (changes: NodeChange<{
-            id: string;
-            type: string;
-            position: { x: number; y: number; };
-            data: { label: string; };
-        }>[]) => setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
+        (changes: NodeChange[]) => setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
         [],
     );
     const onEdgesChange = useCallback(
-        (changes: EdgeChange<{ id: string; source: string; target: string; }>[]) => setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)),
+        (changes: EdgeChange[]) => setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)),
         [],
     );
     const onConnect = useCallback(
@@ -63,37 +71,118 @@ export default function Graph() {
         { header: "Id", key: "__id" },
         { header: "Class", key: "class" },
         { header: "Name", key: "name" },
+        { header: "", key: "empty", render: (_value, row) => (
+            <FaTrash className="text-red-400 cursor-pointer" onClick={() => removeInstance(row.__id)} />
+        )}
     ]
 
     const relationshipsColumn: Column<RelationshipInstance>[] = [
         { header: "Id", key: "__id" },
         { header: "Relationship", key: "name" },
-    ]
+        { header: "", key: "empty", render: (_value, row) => (
+            <FaTrash className="text-red-400 cursor-pointer" onClick={() => removeRelationship(row.__id)} />
+        )}
+    ];
+
+    function removeInstance(instanceId: string) {
+        setSelectedInstances(selectedInstances.filter(s => s !== instanceId));
+    }
+
+    function removeRelationship(relationshipId: string) {
+        setSelectedInstances(selectedRelationships.filter(s => s !== relationshipId));
+    }
+
+    function onInstanceNodeClick(id: string) {
+        if (!detailInstanceIds.includes(id)) {
+            setDetailInstanceIds([...detailInstanceIds, id]);
+        }
+    }
+
+    function onRelationshipEdgeClick(id: string) {
+        if (!detailRelationshipIds.includes(id)) {
+            setDetailRelationshipIds([...detailRelationshipIds, id]);
+        }
+    }
 
     useEffect(() => {
-        if (!selectedDomain) {
-            return;
-        }
+        if (!selectedDomain) return;
+        if (!selectedInstances.length && !selectedRelationships.length) return;
 
-        for (const selectedInstance of selectedInstances) {
-            getInstanceByIdAndDomain(selectedDomain, selectedInstance).then((instance: Instance) => {
-                setInstances([...instances, instance]);
+        generateGraph(selectedDomain, selectedInstances, selectedRelationships)
+            .then(res => {
+                const rawNodes = res.nodes.map((i) => ({
+                    id: i.id,
+                    type: "circular",
+                    position: { x: 0, y: 0 },
+                    data: { label: i.label, isPrimary: selectedInstances.includes(i.id) },
+
+                }));
+
+                const rawEdges = res.edges.map((e) => {
+                    const isPrimary = selectedRelationships.includes(e.id);
+                    return {
+                        id: e.id,
+                        source: e.source,
+                        target: e.target,
+                        label: e.label,
+                        style: isPrimary
+                            ? { stroke: "var(--accent)", strokeWidth: 2 }
+                            : undefined,
+                        labelStyle: isPrimary ? { fill: "var(--accent)" } : undefined,
+                        data: { isPrimary },
+                    };
+                });
+
+                setNodes(layoutWithDagre(rawNodes, rawEdges));
+                setEdges(rawEdges);
             });
-        }
-    }, [selectedInstances]);
+    }, [selectedInstances, selectedRelationships]);
 
     useEffect(() => {
-        if (!selectedDomain) {
-            return;
-        }
+        if (!selectedDomain) return;
 
-        for (const selectedRelationship of selectedRelationships) {
-            getRelationshipInstance(selectedDomain, selectedRelationship).then((rel: RelationshipInstance) => {
-                console.log("e")
-                setRelationshipInstances([...relationshipInstances, rel]);
-            });
-        }
-    }, [selectedRelationships]);
+        Promise.all(
+            selectedInstances.map((id) => getInstanceByIdAndDomain(selectedDomain, id)),
+        ).then((fetched) => setInstances(fetched));
+    }, [selectedInstances, selectedDomain]);
+
+    useEffect(() => {
+        if (!selectedDomain) return;
+
+        Promise.all(
+            selectedRelationships.map((id) => getRelationshipInstance(selectedDomain, id)),
+        ).then((fetched) => setRelationshipInstances(fetched));
+    }, [selectedRelationships, selectedDomain]);
+
+    useEffect(() => {
+        if (!selectedDomain) return;
+
+        Promise.all(
+            detailInstanceIds.map((id) => getInstanceByIdAndDomain(selectedDomain, id)),
+        ).then((fetched) => setDetailInstances(fetched));
+    }, [detailInstanceIds, selectedDomain]);
+
+    useEffect(() => {
+        if (!selectedDomain) return;
+
+        Promise.all(
+            detailRelationshipIds.map((id) => getRelationshipInstance(selectedDomain, id)),
+        ).then((fetched) => setDetailRelationshipInstances(fetched));
+    }, [detailRelationshipIds, selectedDomain]);
+
+    function onCentralityAlgorithmSelect(instanceId: string, alg: string) {
+        if (!selectedDomain) return;
+
+        getNodeCentrality(selectedDomain, instanceId, alg)
+            .then((res) => setCentrality({ ...centrality, [instanceId]: res }));
+    }
+
+    function onLinkPredictionAlgorithmSelection(instanceId: string, alg: string) {
+        if (!selectedDomain) return;
+
+        getNodeLinkPrediction(selectedDomain, instanceId, alg)
+            .then((res) => setLinkPrediction({ ...linkPrediction, [instanceId]: res }));
+    }
 
     return (
         <div className="grid grid-cols-10 h-full">
@@ -132,96 +221,37 @@ export default function Graph() {
             </Card>
 
             <div className="h-full w-full col-span-6">
-                <ReactFlow
+                <GraphCanvas
                     nodes={nodes}
                     edges={edges}
-                    nodeTypes={nodeTypes}
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
                     onConnect={onConnect}
-                    fitView
+                    onNodeSelect={onInstanceNodeClick}
+                    onEdgeSelect={onRelationshipEdgeClick}
+                    centralityOptions={centralityAlgorithmOptions}
+                    linkPredictionOptions={linkPredictionAlgorithmOptions}
+                    onCentralitySelect={onCentralityAlgorithmSelect}
+                    onLinkPredictionSelect={onLinkPredictionAlgorithmSelection}
                 />
             </div>
 
-            <Card className="col-span-2" title="Properties" scrollable>
-                {!instances.length ? (
-                    <div className="text-sm">Select an instance to see its properties</div>
-                ) : (
-                    <div className="flex flex-col gap-4">
-                        {instances.map((instance) => (
-                            <div key={instance.__id} className="flex flex-col gap-2 border-b border-gray-200 pb-3">
-                                <div className="flex items-start justify-between gap-2">
-                                    <div className="text-accent">
-                                        <span className="font-semibold">{instance.class}</span>{" "}
-                                        <span>{(instance as { name?: string }).name ?? ""}</span>{" "}
-                                    </div>
-                                    <FaXmark
-                                        className="cursor-pointer text-gray-500"
-                                        onClick={() => {
-                                            setSelectedInstances(selectedInstances.filter((id) => id !== instance.__id));
-                                            setInstances(instances.filter((i) => i.__id !== instance.__id));
-                                        }}
-                                    />
-                                </div>
+            <GraphProperties
+                className="col-span-2"
+                detailInstances={detailInstances}
+                detailRelationshipInstances={detailRelationshipInstances}
+                onRemoveInstance={(id) => setDetailInstanceIds(detailInstanceIds.filter((i) => i !== id))}
+                onRemoveRelationship={(id) => setDetailRelationshipIds(detailRelationshipIds.filter((r) => r !== id))}
+                isPropertyOpen={isPropertyOpen}
+                setIsPropertyOpen={setIsPropertyOpen}
+                centrality={centrality}
+                linkPrediction={linkPrediction}
+                centralityOptions={centralityAlgorithmOptions}
+                linkPredictionOptions={linkPredictionAlgorithmOptions}
+                onCentralitySelect={onCentralityAlgorithmSelect}
+                onLinkPredictionSelect={onLinkPredictionAlgorithmSelection}
+            />
 
-                                <div className="flex gap-2">
-                                    <Button size="sm" onClick={() => {}}>
-                                        <div className="text-xs">
-                                            Expand Neighbors
-                                        </div>
-                                    </Button>
-                                    <Button size="sm" onClick={() => { setIsPropertyOpen({...isPropertyOpen, [instance.__id] : !isPropertyOpen[instance.__id]}) }}>
-                                        <div className="text-xs">
-                                            { isPropertyOpen[instance.__id] ? "Hide": "Show" } Properties
-                                        </div>
-                                    </Button>
-                                </div>
-
-                                {
-                                    isPropertyOpen[instance.__id] &&
-                                    <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-sm">
-                                        {
-                                            Object.entries(instance)
-                                                .filter(([k]) => !["__id", "name", "class", "attachments"].includes(k))
-                                                .map(([k, v]) => (
-                                                    <Fragment key={k}>
-                                                        <div className="font-semibold">{k}</div>
-                                                        <div className="wrap-break-word">{v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v)}</div>
-                                                    </Fragment>
-                                                ))
-                                        }
-                                    </div>
-                                }
-
-                                <hr className="border-gray-200" />
-
-                                <div className="text-accent text-lg">Analytics</div>
-
-                                <div className="flex flex-col gap-2">
-                                    <div className="flex items-center gap-2">
-                                        <label className="text-sm flex-1">Centrality Algorithms</label>
-                                        <Select className="h-8 w-32" options={[
-                                            { label: "Closeness", value: "closeness" },
-                                            { label: "Betweeness", value: "betweeness" },
-                                            { label: "PageRank", value: "pageRank" },
-                                            { label: "Harmonic", value: "harmonic" },
-                                            { label: "Katz", value: "katz" },
-                                        ]} placeholder="Select one" onChange={() => { /* */ }} />
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <label className="text-sm flex-1">Link Prediction Algorithms</label>
-                                        <Select className="h-8 w-32" options={[
-                                            { label: "Resource Allocation", value: "resourceAllocation" },
-                                            { label: "Common Neighbors", value: "commonNeighbors" },
-                                            { label: "Katz", value: "katz" },
-                                            { label: "AdamicAdar", value: "adamicAdar" },
-                                        ]} placeholder="Select one" onChange={() => { /* */ }} />                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </Card>
         </div>
     );
 }

@@ -1,4 +1,4 @@
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 
 type GraphContextValue = {
@@ -7,44 +7,54 @@ type GraphContextValue = {
 
     selectedRelationships: string[];
     setSelectedRelationships: (relationships: string[]) => void;
+
+    detailInstances: string[];
+    setDetailInstances: (instances: string[]) => void;
+
+    detailRelationships: string[];
+    setDetailRelationships: (relationships: string[]) => void;
 };
 
 const GraphContext = createContext<GraphContextValue | undefined>(undefined);
 
+function useUrlList(searchParams: URLSearchParams, key: string) {
+    const raw = searchParams.get(key) ?? "";
+    return useMemo(() => raw.split(",").filter(Boolean), [raw]);
+}
+
 export function GraphProvider({ children }: { children: ReactNode }) {
     const [searchParams, setSearchParams] = useSearchParams();
 
-    const selectedInstances = searchParams.get("graphSelectedInstances")?.split(",").filter(Boolean) ?? [];
-    const selectedRelationships = searchParams.get("graphSelectedRelationships")?.split(",").filter(Boolean) ?? [];
+    const selectedInstances = useUrlList(searchParams, "graphSelectedInstances");
+    const selectedRelationships = useUrlList(searchParams, "graphSelectedRelationships");
+    const detailInstances = useUrlList(searchParams, "graphDetailInstances");
+    const detailRelationships = useUrlList(searchParams, "graphDetailRelationships");
 
-    function setSelectedInstances(graphSelectedInstances: string[]) {
+    function writeList(key: string, value: string[]) {
         setSearchParams((prev) => {
             const next = new URLSearchParams(prev);
-            if (graphSelectedInstances.length > 0) {
-                next.set("graphSelectedInstances", graphSelectedInstances.join(","));
+            if (value.length > 0) {
+                next.set(key, value.join(","));
             } else {
-                next.delete("graphSelectedInstances");
+                next.delete(key);
             }
-
-            return next;
-        });
-    }
-
-    function setSelectedRelationships(graphSelectedRelationships: string[]) {
-        setSearchParams((prev) => {
-            const next = new URLSearchParams(prev);
-            if (graphSelectedRelationships.length > 0) {
-                next.set("graphSelectedRelationships", graphSelectedRelationships.join(","));
-            } else {
-                next.delete("graphSelectedRelationships");
-            }
-
             return next;
         });
     }
 
     return (
-        <GraphContext.Provider value={{ selectedInstances, selectedRelationships, setSelectedInstances, setSelectedRelationships }}>
+        <GraphContext.Provider
+            value={{
+                selectedInstances,
+                selectedRelationships,
+                detailInstances,
+                detailRelationships,
+                setSelectedInstances: (v) => writeList("graphSelectedInstances", v),
+                setSelectedRelationships: (v) => writeList("graphSelectedRelationships", v),
+                setDetailInstances: (v) => writeList("graphDetailInstances", v),
+                setDetailRelationships: (v) => writeList("graphDetailRelationships", v),
+            }}
+        >
             {children}
         </GraphContext.Provider>
     );
