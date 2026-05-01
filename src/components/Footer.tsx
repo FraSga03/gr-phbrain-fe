@@ -1,16 +1,15 @@
 import { FaChevronLeft, FaSignOutAlt } from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.tsx";
+import { useUI } from "../context/UIProviderContext.tsx";
 
-type FooterProps = {
-    onToggle: () => void;
-    collapsed: boolean;
-};
-
-export default function Footer({ onToggle, collapsed }: FooterProps) {
+export default function Footer() {
     const navigate = useNavigate();
     const location = useLocation();
     const { user, profilePicture } = useAuth();
+    const { isSidebarOpen, setIsSidebarOpen } = useUI();
+    const collapsed = !isSidebarOpen;
+    const onToggle = () => setIsSidebarOpen(!isSidebarOpen);
 
     function logout() {
         navigate("/login")

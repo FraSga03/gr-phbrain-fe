@@ -111,12 +111,13 @@ export default function Entity() {
         }
         getInstanceByIdAndDomain(selectedDomain, selectedInstanceId)
             .then((instance) => {
-                setSelectedInstance(instance);
+                setSelectedInstance({ ...instance, attachments: instance.attachments ?? [] });
+                return
             })
     }, [selectedInstanceId]);
 
     return (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
             <Card title="Select class">
                 <ClassSelector
                     selectedPath={selectedClasses}

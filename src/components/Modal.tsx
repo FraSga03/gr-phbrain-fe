@@ -24,7 +24,7 @@ export default function Modal({ open, onClose, title, width = "32rem", children 
             style={{ content: { width } }}
         >
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-                <div className="text-accent text-lg font-semibold">{title}</div>
+                <div className="text-accent text-xl font-semibold">{title}</div>
             </div>
             <div className="p-4">{children}</div>
         </ReactModal>

@@ -45,7 +45,8 @@ export default function Dashboard() {
     }, []);
 
     function handleRankingPageChange(page: number) {
-        getUserRanking(page).then(setRankings);
+        getUserRanking(page)
+            .then(setRankings);
     }
 
     const contributionsColumns: Column<Contribution>[] = [
@@ -62,20 +63,25 @@ export default function Dashboard() {
     ];
 
     return (
-        <div className="flex flex-col gap-6 select-none">
+        <div className="flex flex-col gap-3 select-none">
             <div className="text-2xl font-semibold text-accent leading-none">
                 Welcome {user?.username}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card title="Hall of Fame" className="col-span-2">
-                    {rankings && (
-                        <Table
-                            paginatedResult={rankings}
-                            onPageChange={handleRankingPageChange}
-                            columns={userRankColumns}
-                        />
-                    )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <Card title="Statistics" className="h-min">
+                    <Table data={contributions} columns={contributionsColumns} shrink />
+
+                    <div className="mt-3 flex flex-col gap-3 text-sm">
+                        <div className="flex justify-between">
+                            <span>Credit</span>
+                            <span className="font-medium">{credit?.credits}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>Bonus</span>
+                            <span className="font-medium">{credit?.bonus}</span>
+                        </div>
+                    </div>
                 </Card>
 
                 <Card title="Suggestion" className="h-min">
@@ -97,19 +103,15 @@ export default function Dashboard() {
                     </form>
                 </Card>
 
-                <Card title="Statistics">
-                    <Table data={contributions} columns={contributionsColumns} />
 
-                    <div className="mt-4 flex flex-col gap-2 text-sm">
-                        <div className="flex justify-between">
-                            <span>Credit</span>
-                            <span className="font-medium">{credit?.credits}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span>Bonus</span>
-                            <span className="font-medium">{credit?.bonus}</span>
-                        </div>
-                    </div>
+                <Card title="Hall of Fame" className="col-span-2">
+                    {rankings && (
+                        <Table
+                            paginatedResult={rankings}
+                            onPageChange={handleRankingPageChange}
+                            columns={userRankColumns}
+                        />
+                    )}
                 </Card>
             </div>
         </div>

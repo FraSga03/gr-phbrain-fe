@@ -188,7 +188,7 @@ export default function ListClassSelector({
 			</div>
 
 			<div className="flex justify-end">
-				<Button size="sm" onClick={startAddClass}>Aggiungi</Button>
+				<Button size="sm" onClick={startAddClass}>Add</Button>
 			</div>
 
 			<Modal width="32rem" open={isModalOpen} onClose={closeModal} title={editingClass ? "Edit class" : "Add class"}>

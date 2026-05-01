@@ -16,3 +16,19 @@ export type InputAttachment = {
     description: string;
     type: string;
 }
+
+export type UploadedAttachment = {
+    id: string;
+    type: string;
+    description: string;
+    filename: string;
+    filesize: number;
+    url: string;
+    uploadedAt: string;
+};
+
+export type SaveFileResponse = {
+    message: string;
+    attachment: UploadedAttachment;
+    instance: Record;
+};

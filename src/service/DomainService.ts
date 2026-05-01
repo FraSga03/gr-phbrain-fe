@@ -3,7 +3,8 @@ import type { ClassNode } from "../types/ClassNode.ts";
 import type { EvaluationCreateDTO } from "../schemas/EvaluationForm.ts";
 import type { DomainHierarchy } from "../types/DomainClass.ts";
 import type { Instance } from "../types/Instance.ts";
-import type { SchemaEdit } from "../types/Schema.ts";
+import type { SchemaEdit, UploadResponse } from "../types/Schema.ts";
+import type { SaveFileResponse } from "../types/Record.ts";
 
 const BASE_PATH = "/domains";
 
@@ -37,8 +38,8 @@ export async function editInstance(domain: string, id: string, dto: EvaluationCr
     return res.data;
 }
 
-export async function saveFile(domain: string, id: string, dto: FormData) {
-    const res = await api.post(`${BASE_PATH}/instance/${domain}/${id}/file`, dto, {
+export async function saveFile(domain: string, id: string, dto: FormData): Promise<SaveFileResponse> {
+    const res = await api.post<SaveFileResponse>(`${BASE_PATH}/instance/${domain}/${id}/file`, dto, {
         headers: dto instanceof FormData ? { "Content-Type": "multipart/form-data" } : {}
     });
     return res.data;
@@ -54,24 +55,19 @@ export async function getDomainClasses(domain: string) {
     return res.data;
 }
 
-export async function download(domain: string, schemaEdit: SchemaEdit[], format: string) {
-    const res = await api.post<string[]>(`${BASE_PATH}/download/${domain}`, {
+export async function downloadDomainSchema(domain: string, schemaEdit: SchemaEdit[], format: string, fileName: string) {
+    const res = await api.post<Blob>(`${BASE_PATH}/download/${domain}`, {
         schemaEdit,
         format,
-    });
+        fileName,
+    }, { responseType: "blob" });
     return res.data;
 }
 
-export async function upload(domain: string, dto: FormData) {
-    const res = await api.post<string[]>(`${BASE_PATH}/upload/${domain}`, dto, {
+export async function upload(dto: FormData) {
+    const res = await api.post<UploadResponse>(`${BASE_PATH}/upload/`, dto, {
         headers: dto instanceof FormData ? { "Content-Type": "multipart/form-data" } : {}
     });
     return res.data;
 }
 
-export async function downloadGraph(domain: string, dto: FormData) {
-    const res = await api.post<string[]>(`${BASE_PATH}/download/${domain}`, dto, {
-        headers: dto instanceof FormData ? { "Content-Type": "multipart/form-data" } : {}
-    });
-    return res.data;
-}

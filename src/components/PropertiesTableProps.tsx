@@ -193,7 +193,7 @@ export default function PropertiesTable({
 
             <div className="flex justify-end">
                 <Button size="sm" onClick={addProperty}>
-                    Aggiungi
+                    Add
                 </Button>
             </div>
 
@@ -216,7 +216,7 @@ export default function PropertiesTable({
 
                                 <div className="flex justify-end">
                                     <Button size="sm" onClick={startAddValue}>
-                                        Aggiungi
+                                        Add
                                     </Button>
                                 </div>
                             </div>

@@ -63,37 +63,53 @@ export default function RecordForm({ selectedInstance, currentClass, currentDoma
         }
     }
 
+    function handleReset() {
+        const propertyKeys = Object.keys(currentClass?.properties ?? {});
+        if (selectedInstance) {
+            const values = Object.fromEntries(
+                propertyKeys.map(key => [key, (selectedInstance as Record)[key] ?? null])
+            );
+            reset(values);
+        } else {
+            reset(Object.fromEntries(propertyKeys.map(key => [key, null])));
+            onReset();
+        }
+        clearErrors();
+    }
+
     return (
         <>
             {Object.keys(currentClass?.properties ?? {}).length ? (
-                <form className="grid grid-cols-2 gap-4" onSubmit={handleSubmit(onSubmit)}>
-                    {Object.entries(currentClass?.properties ?? {}).map(([key, config]) => (
-                        <div key={key}>
-                            {config.type === "string" || config.type === "number" || config.type === "date" ? (
-                                <InputField
-                                    label={`${key}${config.required ? ' *' : ''}`}
-                                    type={config.type === "date" ? "date" : config.type}
-                                    registration={register(key, { required: config.required ? `${key} is required` : false })}
-                                    error={errors[key] as never}
-                                    size="md"
-                                />
-                            ) : Array.isArray(config.type) ? (
-                                <div className="flex flex-col gap-0.5">
-                                    <label className="label text-lg!">{key}{config.required ? ' *' : ''}</label>
-                                    <Select
-                                        options={config.type.map((opt) => ({ label: opt, value: opt }))}
-                                        placeholder={`Select ${key}`}
+                <form className="flex flex-col flex-1 justify-between gap-3" onSubmit={handleSubmit(onSubmit)}>
+                    <div className="grid grid-cols-2 gap-3">
+                        {Object.entries(currentClass?.properties ?? {}).map(([key, config]) => (
+                            <div key={key}>
+                                {config.type === "string" || config.type === "number" || config.type === "date" ? (
+                                    <InputField
+                                        label={`${key}${config.required ? ' *' : ''}`}
+                                        type={config.type === "date" ? "date" : config.type}
                                         registration={register(key, { required: config.required ? `${key} is required` : false })}
-                                        className="h-10"
                                         error={errors[key] as never}
+                                        size="md"
                                     />
-                                </div>
-                            ) : null}
-                        </div>
-                    ))}
+                                ) : Array.isArray(config.type) ? (
+                                    <div className="flex flex-col gap-0.5">
+                                        <label className="label text-lg!">{key}{config.required ? ' *' : ''}</label>
+                                        <Select
+                                            options={config.type.map((opt) => ({ label: opt, value: opt }))}
+                                            placeholder={`Select ${key}`}
+                                            registration={register(key, { required: config.required ? `${key} is required` : false })}
+                                            className="h-10"
+                                            error={errors[key] as never}
+                                        />
+                                    </div>
+                                ) : null}
+                            </div>
+                        ))}
+                    </div>
 
-                    <div className="flex justify-end gap-2 col-span-2">
-                        <Button type="reset" onClick={onReset} disabled={isSubmitting} variant="secondary">
+                    <div className="flex justify-end gap-3">
+                        <Button type="button" onClick={handleReset} disabled={isSubmitting} variant="secondary">
                             Reset
                         </Button>
                         <Button type="submit" disabled={isSubmitting}>

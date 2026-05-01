@@ -22,8 +22,8 @@ export default function InstanceSelector({
 	buttons,
 }: InstanceSelectorProps) {
 	return (
-		<div className="flex flex-col gap-2">
-			<div className={`flex flex-col gap-2 text-sm ${!instanceOptions.length ? 'opacity-30' : ''}`}>
+		<div className="flex flex-col gap-3">
+			<div className={`flex flex-col gap-3 text-sm ${!instanceOptions.length ? 'opacity-30' : ''}`}>
 				<Select
 					options={instanceOptions}
 					placeholder="Select instance"
@@ -35,7 +35,7 @@ export default function InstanceSelector({
 			</div>
 
 			{buttons.length > 0 && (
-				<div className="flex justify-end gap-2">
+				<div className="flex justify-end gap-3">
 					{buttons.map((btn, idx) => (
 						<Button
 							key={idx}

@@ -56,6 +56,7 @@ type RelationshipContextValue = {
 
     selectedRelationship: string | null;
     setSelectedRelationship: (id: string | null) => void;
+    setSelectedRelationshipAndObjectClasses: (id: string | null, objectClasses: string[]) => void;
 
     selectedRelationshipInstanceId: string | null;
     setSelectedRelationshipInstanceId: (id: string | null) => void;
@@ -180,6 +181,33 @@ export function RelationshipProvider({ children }: { children: ReactNode }) {
         });
     }
 
+    function setSelectedRelationshipAndObjectClasses(relationship: string | null, objectClasses: string[]) {
+        setSearchParams((prev) => {
+            const next = new URLSearchParams(prev);
+            const currentRel = prev.get("selectedRelationship");
+            if (relationship) {
+                next.set("selectedRelationship", relationship);
+            } else {
+                next.delete("selectedRelationship");
+            }
+            if (currentRel !== relationship) {
+                next.delete("selectedRelationshipInstanceId");
+            }
+
+            const newObjectValue = objectClasses.length > 0 ? objectClasses.join("-") : null;
+            const currentObjectValue = prev.get("selectedObjectClasses");
+            if (newObjectValue) {
+                next.set("selectedObjectClasses", newObjectValue);
+            } else {
+                next.delete("selectedObjectClasses");
+            }
+            if (currentObjectValue !== newObjectValue) {
+                next.delete("selectedObjectInstanceId");
+            }
+            return next;
+        });
+    }
+
     useEffect(() => {
         // Only clear relationship params if domain actually changed (not on initial mount)
         if (prevDomainRef.current !== null && selectedDomain !== prevDomainRef.current && (selectedSubjectClasses.length > 0 || selectedSubjectInstanceId)) {
@@ -212,6 +240,7 @@ export function RelationshipProvider({ children }: { children: ReactNode }) {
 
             selectedRelationship,
             setSelectedRelationship,
+            setSelectedRelationshipAndObjectClasses,
 
             selectedRelationshipInstanceId,
             setSelectedRelationshipInstanceId

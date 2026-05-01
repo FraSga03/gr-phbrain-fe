@@ -9,15 +9,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { downloadSchema, type DownloadForm } from "../schemas/DownloadForm.ts";
 import { uploadSchema, type UploadForm } from "../schemas/UploadForm.ts";
 import { extractGraphSchema, type ExtractGraphForm } from "../schemas/ExtractGraphForm.ts";
-import type { SchemaEdit } from "../types/Schema.ts";
-import { download, downloadGraph, upload } from "../service/DomainService.ts";
+import type { SchemaEdit, UploadedFile } from "../types/Schema.ts";
+import { downloadDomainSchema, upload } from "../service/DomainService.ts";
+import { downloadGraph } from "../service/GraphService.ts";
 import { useDomain } from "../context/DomainContext.tsx";
+import { downloadFile } from "../utils/downloadFile.ts";
+import toast from "react-hot-toast";
 
 type SchemaHandlerProps = {
     schemaEdits?: SchemaEdit[];
+    setUploadedFile: (file: UploadedFile | null) => void;
 };
 
-export default function SchemaHandler({ schemaEdits }: SchemaHandlerProps) {
+export default function SchemaHandler({ schemaEdits, setUploadedFile }: SchemaHandlerProps) {
     const { selectedDomain } = useDomain();
     const [isDownloadOpen, setIsDownloadOpen] = useState(false);
     const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -58,8 +62,13 @@ export default function SchemaHandler({ schemaEdits }: SchemaHandlerProps) {
 
     async function onSubmitDownload(data: DownloadForm) {
         if (!selectedDomain) return;
-        await download(selectedDomain, schemaEdits ?? [], data.format);
-        closeDownloadModal();
+
+        downloadDomainSchema(selectedDomain, schemaEdits ?? [], data.format, data.fileName)
+            .then((blob: Blob) => {
+                downloadFile(blob, `${data.fileName}.${data.format}`)
+                toast.success(`${data.fileName}.${data.format} downloaded successfully.`);
+                closeDownloadModal();
+            })
     }
 
     async function onSubmitUpload(data: UploadForm) {
@@ -68,8 +77,14 @@ export default function SchemaHandler({ schemaEdits }: SchemaHandlerProps) {
         fd.append("file", data.file[0]);
         fd.append("importOntology", String(data.importOntology));
         fd.append("importInstances", String(data.importInstances));
-        await upload(selectedDomain, fd);
-        closeUploadModal();
+
+        upload(fd)
+            .then(res => {
+                setUploadedFile({ id: res.id, filename: res.filename });
+
+                toast.success("Upload successful");
+                closeUploadModal();
+            })
     }
 
     async function onSubmitExtract(data: ExtractGraphForm) {
@@ -80,8 +95,13 @@ export default function SchemaHandler({ schemaEdits }: SchemaHandlerProps) {
         fd.append("nodeId", data.nodeId);
         fd.append("distance", String(data.distance));
         fd.append("outputFile", data.outputFile);
-        await downloadGraph(selectedDomain, fd);
-        closeGraphModal();
+
+        await downloadGraph(fd)
+            .then(blob => {
+                downloadFile(blob, data.outputFile);
+                toast.success(`${data.outputFile} downloaded successfully.`);
+                closeGraphModal();
+            });
     }
 
     return <>
@@ -110,7 +130,7 @@ export default function SchemaHandler({ schemaEdits }: SchemaHandlerProps) {
                         options={[
                             { label: "GBS", value: "gbs" },
                             { label: "OWL", value: "owl" },
-                            { label: "Prolog", value: "prolog" },
+                            { label: "Prolog", value: "pl" },
                         ]}
                         placeholder="Select a format"
                         registration={downloadForm.register("format", { required: "Format is required" })}
@@ -134,7 +154,7 @@ export default function SchemaHandler({ schemaEdits }: SchemaHandlerProps) {
             <form className="flex flex-col gap-3" onSubmit={uploadForm.handleSubmit(onSubmitUpload)}>
                 <FileInput
                     label="Ontology *"
-                    accept=".rdf,.owl,.ttl,.xml"
+                    accept=".gbs"
                     registration={uploadForm.register("file", { required: "File is required" })}
                     error={uploadForm.formState.errors.file as never}
                     size="md"
@@ -165,7 +185,7 @@ export default function SchemaHandler({ schemaEdits }: SchemaHandlerProps) {
             <form className="flex flex-col gap-3" onSubmit={extractForm.handleSubmit(onSubmitExtract)}>
                 <FileInput
                     label="Ontology *"
-                    accept=".rdf,.owl,.ttl,.xml"
+                    accept=".gbs"
                     registration={extractForm.register("file", { required: "File is required" })}
                     error={extractForm.formState.errors.file as never}
                     size="md"

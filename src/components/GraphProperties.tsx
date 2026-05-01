@@ -6,17 +6,26 @@ import Select from "./Select.tsx";
 import type { Instance } from "../types/Instance.ts";
 import type { RelationshipInstance } from "../types/Relationship.ts";
 
+function toText(v: unknown): string {
+    if (v == null) return "";
+    if (typeof v === "object") return JSON.stringify(v);
+    return String(v);
+}
+
 type AlgorithmOption = { label: string; value: string };
 
 type GraphPropertiesProps = {
     detailInstances: Instance[];
     detailRelationshipInstances: RelationshipInstance[];
     onRemoveInstance: (id: string) => void;
+    onExpandInstance: (id: string) => void;
     onRemoveRelationship: (id: string) => void;
     isPropertyOpen: { [key: string]: boolean };
     setIsPropertyOpen: (next: { [key: string]: boolean }) => void;
     centrality: { [key: string]: number };
     linkPrediction: { [key: string]: number };
+    centralityAlg: { [key: string]: string };
+    linkPredictionAlg: { [key: string]: string };
     centralityOptions: AlgorithmOption[];
     linkPredictionOptions: AlgorithmOption[];
     onCentralitySelect: (instanceId: string, algorithm: string) => void;
@@ -29,10 +38,13 @@ export default function GraphProperties({
     detailRelationshipInstances,
     onRemoveInstance,
     onRemoveRelationship,
+    onExpandInstance,
     isPropertyOpen,
     setIsPropertyOpen,
     centrality,
     linkPrediction,
+    centralityAlg,
+    linkPredictionAlg,
     centralityOptions,
     linkPredictionOptions,
     onCentralitySelect,
@@ -52,10 +64,10 @@ export default function GraphProperties({
                             <div className="text-lg">Instances</div>
                             {detailInstances.map((instance) => (
                                 <div key={instance.__id} className="flex flex-col gap-2 border-b border-gray-200 pb-3">
-                                    <div className="flex items-start justify-between gap-2">
+                                    <div className="flex items-start justify-between gap-2 pr-1">
                                         <div className="text-accent">
-                                            <span className="font-semibold">{instance.class}</span>{" "}
-                                            <span>{(instance as { name?: string }).name ?? ""}</span>{" "}
+                                            <span className="font-semibold">{toText(instance.class)}</span>{" "}
+                                            <span>{toText((instance as { name?: unknown }).name)}</span>{" "}
                                         </div>
                                         <FaXmark
                                             className="cursor-pointer text-gray-500"
@@ -64,7 +76,7 @@ export default function GraphProperties({
                                     </div>
 
                                     <div className="flex gap-2">
-                                        <Button size="sm" onClick={() => {}}>
+                                        <Button size="sm" onClick={() => {onExpandInstance(instance.__id)}}>
                                             <div className="text-xs">Expand Neighbors</div>
                                         </Button>
                                         <Button
@@ -109,6 +121,7 @@ export default function GraphProperties({
                                                     className="h-8 w-32"
                                                     options={centralityOptions}
                                                     placeholder="Select one"
+                                                    value={centralityAlg[instance.__id] ?? ""}
                                                     onChange={(k) => onCentralitySelect(instance.__id, k)}
                                                 />
                                             </div>
@@ -130,6 +143,7 @@ export default function GraphProperties({
                                                     className="h-8 w-32"
                                                     options={linkPredictionOptions}
                                                     placeholder="Select one"
+                                                    value={linkPredictionAlg[instance.__id] ?? ""}
                                                     onChange={(k) => onLinkPredictionSelect(instance.__id, k)}
                                                 />
                                             </div>
@@ -152,10 +166,10 @@ export default function GraphProperties({
                             <div className="text-lg">Relationships</div>
                             {detailRelationshipInstances.map((rel) => (
                                 <div key={rel.__id} className="flex flex-col gap-2 border-b border-gray-200 pb-3">
-                                    <div className="flex items-start justify-between gap-2">
+                                    <div className="flex items-start justify-between gap-2 pr-1">
                                         <div className="text-accent">
                                             <span className="font-semibold">
-                                                {(rel as { name?: string }).name} - {rel.__id}
+                                                {toText((rel as { name?: unknown }).name)} - {rel.__id}
                                             </span>
                                         </div>
                                         <FaXmark

@@ -27,16 +27,15 @@ export default function RelationshipForm({ subject, object, domain, onRelationsh
 
     const navigate = useNavigate();
     const location = useLocation();
-    const { selectedRelationships: graphSelectedRelationships, setSelectedRelationships: setGraphSelectedRelationships } = useGraph();
+    const { selectedRelationships: graphSelectedRelationships } = useGraph();
 
     const goToGraphWithRelationship = (relationshipInstanceId: string | null) => {
         if (!relationshipInstanceId) return;
         const next = graphSelectedRelationships.includes(relationshipInstanceId)
             ? graphSelectedRelationships
             : [...graphSelectedRelationships, relationshipInstanceId];
-        setGraphSelectedRelationships(next);
         const qParams = new URLSearchParams(location.search);
-        qParams.set("graphSelectedRelationships", next.join("-"));
+        qParams.set("graphSelectedRelationships", next.join(","));
         navigate(`/admin/graph?${qParams.toString()}`);
     };
 
@@ -177,8 +176,13 @@ export default function RelationshipForm({ subject, object, domain, onRelationsh
                         Properties
                     </div>
 
-                    {Object.keys(currentRelationship?.properties ?? {}).length ? (
+                    {currentRelationship && (isCreateMode || selectedInstance) ? (
                         <form className="grid grid-cols-2 gap-4" onSubmit={handleSubmit(onSubmit)}>
+                            {Object.keys(currentRelationship?.properties ?? {}).length === 0 && (
+                                <div className="col-span-2">
+                                    This relationship has no property
+                                </div>
+                            )}
                             {Object.entries(currentRelationship?.properties ?? {}).map(([key, config]) => (
                                 <div key={key}>
                                     {config.type === "string" || config.type === "number" || config.type === "date" ? (
@@ -205,9 +209,11 @@ export default function RelationshipForm({ subject, object, domain, onRelationsh
                             ))}
 
                             <div className="flex justify-end gap-2 col-span-2">
-                                <Button type="button" onClick={onReset} disabled={isSubmitting} variant="secondary">
-                                    Reset
-                                </Button>
+                                {Object.keys(currentRelationship?.properties ?? {}).length > 0 && (
+                                    <Button type="button" onClick={onReset} disabled={isSubmitting} variant="secondary">
+                                        Reset
+                                    </Button>
+                                )}
                                 <Button type="submit" disabled={isSubmitting || (isCreateMode && !(subjectId && objectId))}>
                                     {isSubmitting ? "Loading..." : isCreateMode ? "Save" : "Edit"}
                                 </Button>

@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
-import { applyNodeChanges, applyEdgeChanges, addEdge, type NodeChange, type EdgeChange } from '@xyflow/react';
+import { applyNodeChanges, applyEdgeChanges, addEdge, type NodeChange, type EdgeChange, type Connection } from '@xyflow/react';
+import type { GraphNode, GraphEdge } from "../../types/GraphFlow.ts";
 import Card from "../../components/Card";
 import { useGraph } from "../../context/GraphContext.tsx";
 import type { Instance } from "../../types/Instance.ts";
@@ -10,13 +11,14 @@ import { getRelationshipInstance } from "../../service/RelationshipService.ts";
 import type { Column } from "../../types/Table.ts";
 import Table from "../../components/Table.tsx";
 import { generateGraph, getNodeCentrality, getNodeLinkPrediction } from "../../service/GraphService.ts";
-import GraphCanvas, { layoutWithDagre } from "../../components/GraphCanvas.tsx";
+import GraphCanvas from "../../components/GraphCanvas.tsx";
+import { assignParallelEdgeOffsets, layoutWithDagre } from "../../utils/graphLayout.ts";
 import GraphProperties from "../../components/GraphProperties.tsx";
 import { FaTrash } from "react-icons/fa";
 
 export default function Graph() {
-    const [nodes, setNodes] = useState<any[]>([]);
-    const [edges, setEdges] = useState<any[]>([]);
+    const [nodes, setNodes] = useState<GraphNode[]>([]);
+    const [edges, setEdges] = useState<GraphEdge[]>([]);
 
     const {
         setSelectedInstances,
@@ -38,6 +40,8 @@ export default function Graph() {
     const [isPropertyOpen, setIsPropertyOpen] = useState<{ [key: string]: boolean }>({});
     const [centrality, setCentrality] = useState<{ [key: string]: number }>({});
     const [linkPrediction, setLinkPrediction] = useState<{ [key: string]: number }>({});
+    const [centralityAlg, setCentralityAlg] = useState<{ [key: string]: string }>({});
+    const [linkPredictionAlg, setLinkPredictionAlg] = useState<{ [key: string]: string }>({});
 
     const linkPredictionAlgorithmOptions = [
         { label: "Resource Allocation", value: "resourceAllocation" },
@@ -55,15 +59,15 @@ export default function Graph() {
     ];
 
     const onNodesChange = useCallback(
-        (changes: NodeChange[]) => setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
+        (changes: NodeChange<GraphNode>[]) => setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
         [],
     );
     const onEdgesChange = useCallback(
-        (changes: EdgeChange[]) => setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)),
+        (changes: EdgeChange<GraphEdge>[]) => setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)),
         [],
     );
     const onConnect = useCallback(
-        (params: any) => setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
+        (params: Connection) => setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
         [],
     );
 
@@ -89,7 +93,7 @@ export default function Graph() {
     }
 
     function removeRelationship(relationshipId: string) {
-        setSelectedInstances(selectedRelationships.filter(s => s !== relationshipId));
+        setSelectedRelationships(selectedRelationships.filter(s => s !== relationshipId));
     }
 
     function onInstanceNodeClick(id: string) {
@@ -104,39 +108,87 @@ export default function Graph() {
         }
     }
 
+    function onCentralityAlgorithmSelect(instanceId: string, alg: string) {
+        if (!selectedDomain) return;
+
+        if (!detailInstanceIds.includes(instanceId)) {
+            setDetailInstanceIds([...detailInstanceIds, instanceId]);
+        }
+        setCentralityAlg((prev) => ({ ...prev, [instanceId]: alg }));
+
+        getNodeCentrality(selectedDomain, instanceId, alg)
+            .then((res) => setCentrality((prev) => ({ ...prev, [instanceId]: res })));
+    }
+
+    function onLinkPredictionAlgorithmSelection(instanceId: string, alg: string) {
+        if (!selectedDomain) return;
+
+        if (!detailInstanceIds.includes(instanceId)) {
+            setDetailInstanceIds([...detailInstanceIds, instanceId]);
+        }
+        setLinkPredictionAlg((prev) => ({ ...prev, [instanceId]: alg }));
+
+        getNodeLinkPrediction(selectedDomain, instanceId, alg)
+            .then((res) => setLinkPrediction((prev) => ({ ...prev, [instanceId]: res })));
+    }
+
     useEffect(() => {
         if (!selectedDomain) return;
         if (!selectedInstances.length && !selectedRelationships.length) return;
 
         generateGraph(selectedDomain, selectedInstances, selectedRelationships)
             .then(res => {
-                const rawNodes = res.nodes.map((i) => ({
+                const rawNodes: GraphNode[] = res.nodes.map((i) => ({
                     id: i.id,
                     type: "circular",
                     position: { x: 0, y: 0 },
-                    data: { label: i.label, isPrimary: selectedInstances.includes(i.id) },
-
+                    data: {
+                        label: i.label,
+                        isPrimary: selectedInstances.includes(i.id),
+                        isDetail: detailInstanceIds.includes(i.id),
+                    },
                 }));
 
-                const rawEdges = res.edges.map((e) => {
+                const rawEdges: GraphEdge[] = res.edges.map((e) => {
                     const isPrimary = selectedRelationships.includes(e.id);
+                    const isDetail = detailRelationshipIds.includes(e.id);
+                    const stroke: string | undefined = isDetail ? "#7dd3fc" : isPrimary ? "var(--accent)" : undefined;
                     return {
                         id: e.id,
                         source: e.source,
                         target: e.target,
                         label: e.label,
-                        style: isPrimary
-                            ? { stroke: "var(--accent)", strokeWidth: 2 }
-                            : undefined,
-                        labelStyle: isPrimary ? { fill: "var(--accent)" } : undefined,
-                        data: { isPrimary },
+                        style: stroke ? { stroke, strokeWidth: 2 } : undefined,
+                        labelStyle: stroke ? { fill: stroke } : undefined,
+                        data: { isPrimary, isDetail },
                     };
                 });
 
                 setNodes(layoutWithDagre(rawNodes, rawEdges));
-                setEdges(rawEdges);
+                setEdges(assignParallelEdgeOffsets(rawEdges));
             });
     }, [selectedInstances, selectedRelationships]);
+
+    useEffect(() => {
+        setNodes((prev) => prev.map((n) => ({
+            ...n,
+            data: { ...n.data, isDetail: detailInstanceIds.includes(n.id) },
+        })));
+    }, [detailInstanceIds]);
+
+    useEffect(() => {
+        setEdges((prev) => prev.map((e): GraphEdge => {
+            const isPrimary = !!e.data?.isPrimary;
+            const isDetail = detailRelationshipIds.includes(e.id);
+            const stroke: string | undefined = isDetail ? "#7dd3fc" : isPrimary ? "var(--accent)" : undefined;
+            return {
+                ...e,
+                style: stroke ? { stroke, strokeWidth: 2 } : undefined,
+                labelStyle: stroke ? { fill: stroke } : undefined,
+                data: { isPrimary, isDetail, offset: e.data?.offset },
+            };
+        }));
+    }, [detailRelationshipIds]);
 
     useEffect(() => {
         if (!selectedDomain) return;
@@ -170,27 +222,13 @@ export default function Graph() {
         ).then((fetched) => setDetailRelationshipInstances(fetched));
     }, [detailRelationshipIds, selectedDomain]);
 
-    function onCentralityAlgorithmSelect(instanceId: string, alg: string) {
-        if (!selectedDomain) return;
-
-        getNodeCentrality(selectedDomain, instanceId, alg)
-            .then((res) => setCentrality({ ...centrality, [instanceId]: res }));
-    }
-
-    function onLinkPredictionAlgorithmSelection(instanceId: string, alg: string) {
-        if (!selectedDomain) return;
-
-        getNodeLinkPrediction(selectedDomain, instanceId, alg)
-            .then((res) => setLinkPrediction({ ...linkPrediction, [instanceId]: res }));
-    }
-
     return (
         <div className="grid grid-cols-10 h-full">
             <Card className="col-span-2" title="Selected Nodes" scrollable>
                 {
                     !selectedRelationships.length && !selectedInstances.length ?
                         <div>Select first some relationships or instance in relationships or entities page</div> :
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-3">
                             <div className="flex flex-col gap-1">
                                 <div className="text-lg">Instances</div>
 
@@ -242,10 +280,13 @@ export default function Graph() {
                 detailRelationshipInstances={detailRelationshipInstances}
                 onRemoveInstance={(id) => setDetailInstanceIds(detailInstanceIds.filter((i) => i !== id))}
                 onRemoveRelationship={(id) => setDetailRelationshipIds(detailRelationshipIds.filter((r) => r !== id))}
+                onExpandInstance={(id) => setSelectedInstances([...selectedInstances, id])}
                 isPropertyOpen={isPropertyOpen}
                 setIsPropertyOpen={setIsPropertyOpen}
                 centrality={centrality}
                 linkPrediction={linkPrediction}
+                centralityAlg={centralityAlg}
+                linkPredictionAlg={linkPredictionAlg}
                 centralityOptions={centralityAlgorithmOptions}
                 linkPredictionOptions={linkPredictionAlgorithmOptions}
                 onCentralitySelect={onCentralityAlgorithmSelect}

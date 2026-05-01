@@ -155,7 +155,7 @@ export default function ListRelationshipSelector({
 			</div>
 
 			<div className="flex justify-end">
-				<Button size="sm" onClick={startAddRelationship}>Aggiungi</Button>
+				<Button size="sm" onClick={startAddRelationship}>Add</Button>
 			</div>
 
 			<Modal width="32rem" open={isModalOpen} onClose={closeModal} title={editingRelationship ? "Edit relationship" : "Add relationship"}>

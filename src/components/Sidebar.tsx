@@ -1,15 +1,17 @@
 import SidebarItem from "./SidebarItem";
 import type { ReactNode } from "react";
 import type { SidebarItemConfig } from "../types/SidebarItemConfig.ts";
+import { useUI } from "../context/UIProviderContext.tsx";
 
 type SidebarProps = {
     items: SidebarItemConfig[];
-    title?: string;
-    collapsed: boolean;
     footer?: ReactNode;
 };
 
-export default function Sidebar({ items, title = "App", footer, collapsed }: SidebarProps) {
+export default function Sidebar({ items, footer }: SidebarProps) {
+    const { isSidebarOpen } = useUI();
+    const collapsed = !isSidebarOpen;
+    const title = collapsed ? "GB" : "Gr@phBRAIN";
     return (
         <aside
             className={`h-screen bg-white half-rounded flex flex-col transition-all duration-300
@@ -19,7 +21,7 @@ export default function Sidebar({ items, title = "App", footer, collapsed }: Sid
                 {title}
             </div>
 
-            <nav className="flex-1 p-2 space-y-2 border-r soft-border">
+            <nav className="flex-1 flex flex-col p-2 gap-3 border-r soft-border">
                 {items.map((item) => (
                     <SidebarItem
                         key={item.path}

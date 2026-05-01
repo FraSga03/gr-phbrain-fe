@@ -12,10 +12,21 @@ import type { DomainRelationships, Relationship } from "../../types/Relationship
 import { getAllRelationships, getRelationshipById } from "../../service/RelationshipService.ts";
 import type { SchemaEdit } from "../../types/Schema.ts";
 import SchemaHandler from "../../components/SchemaHandler.tsx";
+import { FaXmark } from "react-icons/fa6";
 
 export default function Schema() {
     const { selectedDomain } = useDomain();
-    const { selectedClass, setSelectedClass, selectedProperty, setSelectedProperty, selectedRelationshipId, setSelectedRelationshipId, clearRelationshipSelection } = useSchema();
+    const {
+        selectedClass,
+        setSelectedClass,
+        selectedProperty,
+        setSelectedProperty,
+        selectedRelationshipId,
+        setSelectedRelationshipId,
+        clearRelationshipSelection,
+        uploadedFile,
+        setUploadedFile
+    } = useSchema();
     const [hierarchy, setHierarchy] = useState<DomainHierarchy | undefined>(undefined);
     const [domainRelationships, setDomainRelationships] = useState<DomainRelationships | undefined>(undefined);
     const [selectedNode, setSelectedNode] = useState<ClassNode | undefined>(undefined);
@@ -96,12 +107,6 @@ export default function Schema() {
 
         return next;
     }
-
-    const classDisplayedProperties = useMemo(() => {
-        if (!selectedNode) return {};
-        const chain = hierarchy ? getAncestorChain(selectedNode.name, hierarchy.hierarchy) ?? [selectedNode.name] : [selectedNode.name];
-        return applyPropertyEdits(selectedNode.properties, chain, schemaEdits, "property");
-    }, [selectedNode, hierarchy, schemaEdits]);
 
     // Apply class-level edits (rename + delete) to the hierarchy so deletes
     // disappear from the tree and renames show the new name.
@@ -215,31 +220,72 @@ export default function Schema() {
         };
     }, [domainRelationships, schemaEdits]);
 
+    const classDisplayedProperties = useMemo(() => {
+        if (!selectedNode) return {};
+        if (!selectedClass) return applyPropertyEdits(selectedNode.properties, [selectedNode.name], schemaEdits, "property");
+        const chain =
+            (displayedHierarchy && getAncestorChain(selectedClass, displayedHierarchy.hierarchy)) ??
+            (hierarchy && getAncestorChain(selectedNode.name, hierarchy.hierarchy)) ??
+            [selectedClass];
+        return applyPropertyEdits(selectedNode.properties, chain, schemaEdits, "property");
+    }, [selectedNode, selectedClass, displayedHierarchy, hierarchy, schemaEdits]);
+
     const relationshipDisplayedProperties = useMemo(() => {
         if (!selectedRelationship) return {};
         return applyPropertyEdits(selectedRelationship.properties, [selectedRelationship.name], schemaEdits, "relationshipProperty");
     }, [selectedRelationship, schemaEdits]);
 
-    useEffect(() => {
-        if (!selectedDomain) return;
-
-        getDomainHierarchy(selectedDomain).then(setHierarchy);
-        getAllRelationships(selectedDomain).then(setDomainRelationships);
-        getDomainClasses(selectedDomain).then(setDomainClasses);
-    }, [selectedDomain]);
+    const domainKey = uploadedFile?.id ?? selectedDomain;
 
     useEffect(() => {
-        if (!selectedDomain || !selectedClass) return;
+        if (!domainKey) return;
 
-        // Class added in the current session — synthesize, don't fetch.
+        getDomainHierarchy(domainKey).then(setHierarchy);
+        getAllRelationships(domainKey).then(setDomainRelationships);
+        getDomainClasses(domainKey).then(setDomainClasses);
+    }, [domainKey]);
+
+    useEffect(() => {
+        if (!domainKey || !selectedClass) return;
+
+        // Resolve a class name (possibly displayed/renamed) back to its backend
+        // name and find the closest non-new ancestor whose properties we can
+        // fetch. New classes recurse up through new ancestors until they find
+        // a real one.
+        function resolveBackendName(name: string): string {
+            const rename = schemaEdits.find(
+                (e) => e.kind === "class" && !e.toBeDeleted && e.name === name && e.originalName !== e.name,
+            );
+            return rename && rename.kind === "class" ? rename.originalName : name;
+        }
+
+        function findInheritedParent(name: string): string | null {
+            const newEdit = schemaEdits.find((e) => e.kind === "newClass" && e.name === name);
+            if (!newEdit || newEdit.kind !== "newClass") return resolveBackendName(name);
+            if (!newEdit.parent) return null;
+            return findInheritedParent(newEdit.parent);
+        }
+
         const newClass = schemaEdits.find((e) => e.kind === "newClass" && e.name === selectedClass);
-        if (newClass) {
-            setSelectedNode({ name: selectedClass, children: [], instances: [], properties: {} });
+        if (newClass && newClass.kind === "newClass") {
+            const inheritFrom = newClass.parent ? findInheritedParent(newClass.parent) : null;
+            if (!inheritFrom) {
+                setSelectedNode({ name: selectedClass, children: [], instances: [], properties: {} });
+                return;
+            }
+            getSubclasses(domainKey, inheritFrom).then((parent) => {
+                setSelectedNode({
+                    name: selectedClass,
+                    children: [],
+                    instances: [],
+                    properties: parent.properties ?? {},
+                });
+            });
             return;
         }
 
-        getSubclasses(selectedDomain, selectedClass).then(setSelectedNode);
-    }, [selectedClass]);
+        getSubclasses(domainKey, resolveBackendName(selectedClass)).then(setSelectedNode);
+    }, [selectedClass, domainKey]);
 
     // If the selected class is no longer present in the (edit-aware) hierarchy,
     // clear the selection so the properties panel hides too.
@@ -266,7 +312,7 @@ export default function Schema() {
     }, [displayedRelationships, selectedRelationshipId]);
 
     useEffect(() => {
-        if (!selectedDomain || !selectedRelationshipId) return;
+        if (!domainKey || !selectedRelationshipId) return;
 
         // A relationship added in the current session has no backend record yet —
         // synthesize an empty one. A renamed relationship must be fetched by its
@@ -287,8 +333,8 @@ export default function Schema() {
         );
         const fetchName = renameEdit && renameEdit.kind === "relationship" ? renameEdit.originalName : selectedRelationshipId;
 
-        getRelationshipById(selectedDomain, fetchName).then(setSelectedRelationship);
-    }, [selectedRelationshipId]);
+        getRelationshipById(domainKey, fetchName).then(setSelectedRelationship);
+    }, [selectedRelationshipId, domainKey]);
 
     useEffect(() => {
         if (schemaEdits.length === 0) return;
@@ -310,15 +356,28 @@ export default function Schema() {
                 <Card title="Domain" subtitle={`${schemaEdits.length ? schemaEdits.length + " edit" + (schemaEdits.length > 1 ? 's' : '') :''}`}>
                     <div className="flex flex-col gap-1">
                         <div>
-                            Currently using the <b>{selectedDomain}</b> domain
-                        </div>
-
-                        <div>
-                            Imported schemas:
+                            Currently using the{" "}
+                            {uploadedFile ? (
+                                <>
+                                    uploaded file{" "}
+                                    <span className="inline-flex items-center gap-1 px-2 bg-gray-200 rounded">
+                                        {uploadedFile.filename}
+                                        <button
+                                            type="button"
+                                            onClick={() => setUploadedFile(null)}
+                                            className="inline-flex items-center justify-center h-1! w-6! px-0! bg-white! rounded-full cursor-pointer"
+                                        >
+                                            <FaXmark color="red" size={15} />
+                                        </button>
+                                    </span>
+                                </>
+                            ) : (
+                                <><b>{selectedDomain}</b> domain</>
+                            )}
                         </div>
 
                         <div className="flex justify-end gap-2">
-                            <SchemaHandler />
+                            <SchemaHandler setUploadedFile={setUploadedFile} />
                         </div>
                     </div>
                 </Card>
@@ -338,12 +397,32 @@ export default function Schema() {
                                     name: form.name,
                                     parent: form.parent || undefined,
                                 }])}
-                                onEdit={(originalName, newName) => setSchemaEdits((prev) => [...prev, {
-                                    kind: "class",
-                                    toBeDeleted: false,
-                                    originalName,
-                                    name: newName,
-                                }])}
+                                onEdit={(originalName, newName) => setSchemaEdits((prev) => {
+                                    const existingIdx = prev.findIndex(
+                                        (e) => e.kind === "class" && !e.toBeDeleted && e.name === originalName,
+                                    );
+                                    if (existingIdx >= 0) {
+                                        const existing = prev[existingIdx];
+                                        const next = [...prev];
+                                        next[existingIdx] = { ...existing, name: newName } as SchemaEdit;
+                                        return next;
+                                    }
+                                    const newClassIdx = prev.findIndex(
+                                        (e) => e.kind === "newClass" && e.name === originalName,
+                                    );
+                                    if (newClassIdx >= 0) {
+                                        const existing = prev[newClassIdx];
+                                        const next = [...prev];
+                                        next[newClassIdx] = { ...existing, name: newName } as SchemaEdit;
+                                        return next;
+                                    }
+                                    return [...prev, {
+                                        kind: "class",
+                                        toBeDeleted: false,
+                                        originalName,
+                                        name: newName,
+                                    }];
+                                })}
                                 onDelete={(node) => {
                                     setSchemaEdits((prev) => [...prev, {
                                         kind: "class",
@@ -428,8 +507,6 @@ export default function Schema() {
                                         class: selectedNode.name,
                                     } as SchemaEdit)}
                                 />
-
-
                             </>
                         )
                     }
@@ -453,14 +530,44 @@ export default function Schema() {
                                 }])}
                                 selectedRelationshipId={selectedRelationshipId ?? undefined}
                                 onEdit={(originalName, edited) => {
-                                    setSchemaEdits((prev) => [...prev, {
-                                        kind: "relationship",
-                                        toBeDeleted: false,
-                                        originalName,
-                                        name: edited.name,
-                                        subjectClass: edited.subjectId,
-                                        objectClass: edited.objectId,
-                                    }]);
+                                    setSchemaEdits((prev) => {
+                                        const existingRelIdx = prev.findIndex(
+                                            (e) => e.kind === "relationship" && !e.toBeDeleted && e.name === originalName,
+                                        );
+                                        if (existingRelIdx >= 0) {
+                                            const existing = prev[existingRelIdx];
+                                            const next = [...prev];
+                                            next[existingRelIdx] = {
+                                                ...existing,
+                                                name: edited.name,
+                                                subjectClass: edited.subjectId,
+                                                objectClass: edited.objectId,
+                                            } as SchemaEdit;
+                                            return next;
+                                        }
+                                        const newRelIdx = prev.findIndex(
+                                            (e) => e.kind === "newRelationship" && e.name === originalName,
+                                        );
+                                        if (newRelIdx >= 0) {
+                                            const existing = prev[newRelIdx];
+                                            const next = [...prev];
+                                            next[newRelIdx] = {
+                                                ...existing,
+                                                name: edited.name,
+                                                subjectClass: edited.subjectId,
+                                                objectClass: edited.objectId,
+                                            } as SchemaEdit;
+                                            return next;
+                                        }
+                                        return [...prev, {
+                                            kind: "relationship",
+                                            toBeDeleted: false,
+                                            originalName,
+                                            name: edited.name,
+                                            subjectClass: edited.subjectId,
+                                            objectClass: edited.objectId,
+                                        }];
+                                    });
                                     clearRelationshipSelection();
                                     setSelectedRelationship(undefined);
                                 }}

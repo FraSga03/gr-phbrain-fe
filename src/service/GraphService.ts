@@ -20,3 +20,11 @@ export async function generateGraph(domain: string, instanceIds: string[] = [], 
     });
     return res.data;
 }
+
+export async function downloadGraph(dto: FormData) {
+    const res = await api.post<Blob>(`${BASE_PATH}/download/file`, dto, {
+        headers: dto instanceof FormData ? { "Content-Type": "multipart/form-data" } : {},
+        responseType: "blob",
+    });
+    return res.data;
+}

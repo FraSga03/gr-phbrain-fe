@@ -10,7 +10,8 @@ export default function Table<T>({
     pagination = false,
     paginatedResult,
     onPageChange,
-    onRowClick
+    onRowClick,
+    shrink = false
 }: TableProps<T>) {
     const [page, setPage] = useState(1);
 
@@ -64,7 +65,7 @@ export default function Table<T>({
     const showPagination = isServerMode || pagination;
 
     return (
-        <div className="w-full min-h-[350px] flex flex-col justify-between">
+        <div className={`w-full ${shrink ? "" : "min-h-[350px]"} flex flex-col justify-between`}>
             <div className="flex-1 overflow-auto border rounded-md bg-white">
                 <table className="w-full text-left border-collapse">
                     <thead className="bg-gray-100 border-b soft-border sticky top-0 z-10">
@@ -111,7 +112,7 @@ export default function Table<T>({
                         Page {currentPage} / {totalPages}
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex gap-3">
                         <button
                             className="px-2 py-1 border rounded disabled:opacity-50"
                             disabled={!canPrev}

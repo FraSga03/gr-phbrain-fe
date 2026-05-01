@@ -12,3 +12,8 @@ export async function login(username: string, password: string): Promise<void> {
     const res = await api.post(`${BASE_PATH}/login`, { username, password });
     return res.data;
 }
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    const res = await api.post(`${BASE_PATH}/change-password`, { currentPassword, newPassword });
+    return res.data;
+}

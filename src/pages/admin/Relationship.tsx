@@ -29,19 +29,19 @@ export default function Relationship() {
 
         selectedRelationship,
         setSelectedRelationship,
+        setSelectedRelationshipAndObjectClasses,
 
         selectedRelationshipInstanceId,
         setSelectedRelationshipInstanceId
     } = useRelationship();
 
-    const { selectedInstances: graphSelectedInstances, setSelectedInstances: setGraphSelectedInstances } = useGraph();
+    const { selectedInstances: graphSelectedInstances } = useGraph();
 
     const goToGraphWithInstance = (instanceId: string | null) => {
         if (!instanceId) return;
         const next = graphSelectedInstances.includes(instanceId)
             ? graphSelectedInstances
             : [...graphSelectedInstances, instanceId];
-        setGraphSelectedInstances(next);
         const qParams = new URLSearchParams(location.search);
         qParams.set("graphSelectedInstances", next.join(","));
         navigate(`/admin/graph?${qParams.toString()}`);
@@ -122,10 +122,13 @@ export default function Relationship() {
     };
 
     function onRelSelect(currRelationship: RelationshipType) {
-        setSelectedRelationship(currRelationship.name);
-
         if (!currentObjectClass) {
-            setSelectedObjectClasses(currRelationship.object.path ?? []);
+            setSelectedRelationshipAndObjectClasses(
+                currRelationship.name,
+                currRelationship.object.path ?? [],
+            );
+        } else {
+            setSelectedRelationship(currRelationship.name);
         }
     }
 

@@ -1,5 +1,20 @@
 import type { Property } from "./ClassNode.ts";
 
+export type UploadResponse = {
+    message: string;
+    id: string;
+    filename: string;
+    storedPath: string;
+    filesize: number;
+    importOntology: boolean;
+    importInstances: boolean;
+}
+
+export type UploadedFile = {
+    id: string;
+    filename: string;
+}
+
 export type SchemaEdit = ({
     kind: "property",
     toBeDeleted?: boolean,

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useDomain } from "./DomainContext.tsx";
+import type { UploadedFile } from "../types/Schema.ts";
 
 type SchemaContextValue = {
     selectedClasses: string[];
@@ -12,6 +13,8 @@ type SchemaContextValue = {
     selectedRelationshipId: string | null;
     setSelectedRelationshipId: (name: string | null) => void;
     clearRelationshipSelection: () => void;
+    uploadedFile: UploadedFile | null;
+    setUploadedFile: (file: UploadedFile | null) => void;
 };
 
 const SchemaContext = createContext<SchemaContextValue | undefined>(undefined);
@@ -24,6 +27,24 @@ export function SchemaProvider({ children }: { children: ReactNode }) {
     const selectedClass = searchParams.get("selectedSchemaClass");
     const selectedProperty = searchParams.get("selectedSchemaProperty");
     const selectedRelationshipId = searchParams.get("selectedSchemaRelationshipId");
+    const uploadedFileId = searchParams.get("uploadedFileId");
+    const uploadedFileName = searchParams.get("uploadedFileName");
+    const uploadedFile: UploadedFile | null =
+        uploadedFileId && uploadedFileName ? { id: uploadedFileId, filename: uploadedFileName } : null;
+
+    function setUploadedFile(file: UploadedFile | null) {
+        setSearchParams((prev) => {
+            const next = new URLSearchParams(prev);
+            if (file) {
+                next.set("uploadedFileId", file.id);
+                next.set("uploadedFileName", file.filename);
+            } else {
+                next.delete("uploadedFileId");
+                next.delete("uploadedFileName");
+            }
+            return next;
+        });
+    }
 
     function setSelectedClasses(newSelectedClasses: string[]) {
         setSearchParams((prev) => {
@@ -91,20 +112,22 @@ export function SchemaProvider({ children }: { children: ReactNode }) {
         if (prevDomainRef.current === selectedDomain) return;
         prevDomainRef.current = selectedDomain;
 
-        if (selectedDomain && (selectedClasses.length > 0 || selectedClass || selectedProperty || selectedRelationshipId)) {
+        if (selectedDomain && (selectedClasses.length > 0 || selectedClass || selectedProperty || selectedRelationshipId || uploadedFileId || uploadedFileName)) {
             setSearchParams((prev) => {
                 const next = new URLSearchParams(prev);
                 next.delete("selectedSchemaClasses");
                 next.delete("selectedSchemaClass");
                 next.delete("selectedSchemaProperty");
                 next.delete("selectedSchemaRelationshipId");
+                next.delete("uploadedFileId");
+                next.delete("uploadedFileName");
                 return next;
             });
         }
     }, [selectedDomain]);
 
     return (
-        <SchemaContext.Provider value={{ selectedClasses, setSelectedClasses, selectedClass, setSelectedClass, selectedProperty, setSelectedProperty, selectedRelationshipId, setSelectedRelationshipId, clearRelationshipSelection }}>
+        <SchemaContext.Provider value={{ selectedClasses, setSelectedClasses, selectedClass, setSelectedClass, selectedProperty, setSelectedProperty, selectedRelationshipId, setSelectedRelationshipId, clearRelationshipSelection, uploadedFile, setUploadedFile }}>
             {children}
         </SchemaContext.Provider>
     );

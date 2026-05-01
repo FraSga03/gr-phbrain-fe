@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import type { Attachment, InputAttachment } from "../types/Record.ts";
+import type { Attachment, InputAttachment, SaveFileResponse } from "../types/Record.ts";
 import Table from "./Table.tsx";
 import type { Column } from "../types/Table.ts";
 import { FaDownload } from "react-icons/fa";
@@ -16,6 +17,12 @@ type AttachmentsFormProps = {
 };
 
 export default function AttachmentsForm({ attachments, domain, instanceId }: AttachmentsFormProps) {
+    const [items, setItems] = useState<Attachment[]>(attachments);
+
+    useEffect(() => {
+        setItems(attachments);
+    }, [attachments]);
+
     const {
         register,
         reset,
@@ -30,14 +37,26 @@ export default function AttachmentsForm({ attachments, domain, instanceId }: Att
     }
 
     const onSubmit = async (data: InputAttachment) => {
+        const file = (data as never)["file"][0] as File;
         const formData = new FormData();
-        formData.append("file", (data as never)["file"][0] as File);
+        formData.append("file", file);
         formData.append("type", data.type);
         formData.append("description", data.description);
 
-        await saveFile(domain, instanceId, formData as never);
-        toast.success("Attachment uploaded successfully");
-        reset();
+        await saveFile(domain, instanceId, formData)
+            .then((res: SaveFileResponse) => {
+                const { attachment } = res;
+
+                const newAttachment: Attachment = {
+                    id: attachment.id,
+                    type: attachment.type,
+                    description: attachment.description,
+                    url: attachment.url,
+                };
+                setItems((prev) => [...prev, newAttachment]);
+                toast.success("Attachment uploaded successfully");
+                reset();
+            });
     }
 
     const attachmentColumn: Column<Attachment>[] = [
@@ -54,11 +73,11 @@ export default function AttachmentsForm({ attachments, domain, instanceId }: Att
     ]
 
     return (
-        <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3">
                 <div className="text-accent text-base">New attachment</div>
 
-                <form className="grid grid-cols-2 gap-2" onSubmit={handleSubmit(onSubmit)}>
+                <form className="grid grid-cols-2 gap-3" onSubmit={handleSubmit(onSubmit)}>
                     <FileInput
                         label="Select files"
                         registration={register("file")}
@@ -84,7 +103,7 @@ export default function AttachmentsForm({ attachments, domain, instanceId }: Att
                         />
                     </div>
 
-                    <div className="col-span-2 flex justify-end gap-2">
+                    <div className="col-span-2 flex justify-end gap-3">
                         <Button
                             type="button"
                             variant="secondary"
@@ -100,11 +119,12 @@ export default function AttachmentsForm({ attachments, domain, instanceId }: Att
                 </form>
             </div>
 
-            {attachments.length > 0 && (
-                <div className="flex flex-col gap-2">
+            {items.length > 0 && (
+                <div className="flex flex-col gap-3">
                     <div className="text-accent text-base">Current attachments</div>
                     <Table
-                        data={attachments}
+                        shrink={true}
+                        data={items}
                         columns={attachmentColumn}
                     />
                 </div>

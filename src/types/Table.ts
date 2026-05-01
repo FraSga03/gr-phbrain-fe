@@ -16,4 +16,5 @@ export type TableProps<T> = {
     paginatedResult?: PaginatedResult<T>;
     onPageChange?: (page: number) => void;
     onRowClick?: (row: T) => void;
+    shrink?: boolean;
 };

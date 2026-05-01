@@ -1,6 +1,5 @@
-import { createContext, useContext, useEffect, type ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useDomain } from "./DomainContext.tsx";
 
 type SelectionContextValue = {
     selectedClasses: string[];
@@ -13,7 +12,6 @@ const SelectionContext = createContext<SelectionContextValue | undefined>(undefi
 
 export function SelectionProvider({ children }: { children: ReactNode }) {
     const [searchParams, setSearchParams] = useSearchParams();
-    const { selectedDomain } = useDomain();
 
     const selectedClasses = searchParams.get("selectedClasses")?.split("-").filter(Boolean) ?? [];
     const selectedInstanceId = searchParams.get("instanceId");
@@ -43,17 +41,6 @@ export function SelectionProvider({ children }: { children: ReactNode }) {
             return next;
         });
     }
-
-    useEffect(() => {
-        if (selectedDomain && (selectedClasses.length > 0 || selectedInstanceId)) {
-            setSearchParams((prev) => {
-                const next = new URLSearchParams(prev);
-                next.delete("selectedClasses");
-                next.delete("instanceId");
-                return next;
-            });
-        }
-    }, [selectedDomain]);
 
     return (
         <SelectionContext.Provider value={{ selectedClasses, selectedInstanceId, setSelectedClasses, setSelectedInstanceId }}>

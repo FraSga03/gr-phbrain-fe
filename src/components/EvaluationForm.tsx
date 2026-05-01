@@ -71,7 +71,7 @@ export default function EvaluationFormComponent({ domainClass, domain, instanceI
                 registration={register("evaluation", { required: "Evaluation is required" })}
                 error={errors.evaluation}
             />
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-3">
                 <Button type="submit" name="reject" disabled={isSubmitting}>
                     {isSubmitting ? "Loading..." : "Reject"}
                 </Button>
