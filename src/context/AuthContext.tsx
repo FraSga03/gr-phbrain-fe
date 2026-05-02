@@ -8,6 +8,7 @@ type AuthContextValue = {
     error: boolean;
     profilePicture: string | null;
     setUser: (user: User | undefined) => void;
+    refresh: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -24,15 +25,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         [user]
     );
 
+    const refresh = async () => {
+        setLoading(true);
+        setError(false);
+        try {
+            const u = await getMe();
+            setUser(u);
+        } catch {
+            setError(true);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        getMe()
-            .then(setUser)
-            .catch(() => setError(true))
-            .finally(() => setLoading(false));
+        refresh();
     }, []);
 
     return (
-        <AuthContext.Provider value={{ user, loading, error, profilePicture, setUser }}>
+        <AuthContext.Provider value={{ user, loading, error, profilePicture, setUser, refresh }}>
             {children}
         </AuthContext.Provider>
     );

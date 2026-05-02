@@ -28,7 +28,6 @@ export type UploadedAttachment = {
 };
 
 export type SaveFileResponse = {
-    message: string;
     attachment: UploadedAttachment;
     instance: Record;
 };

@@ -18,10 +18,11 @@ import toast from "react-hot-toast";
 
 type SchemaHandlerProps = {
     schemaEdits?: SchemaEdit[];
+    uploadedFile?: UploadedFile | null;
     setUploadedFile: (file: UploadedFile | null) => void;
 };
 
-export default function SchemaHandler({ schemaEdits, setUploadedFile }: SchemaHandlerProps) {
+export default function SchemaHandler({ schemaEdits, uploadedFile, setUploadedFile }: SchemaHandlerProps) {
     const { selectedDomain } = useDomain();
     const [isDownloadOpen, setIsDownloadOpen] = useState(false);
     const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -61,9 +62,10 @@ export default function SchemaHandler({ schemaEdits, setUploadedFile }: SchemaHa
     }
 
     async function onSubmitDownload(data: DownloadForm) {
-        if (!selectedDomain) return;
+        const domainKey = uploadedFile?.id ?? selectedDomain;
+        if (!domainKey) return;
 
-        downloadDomainSchema(selectedDomain, schemaEdits ?? [], data.format, data.fileName)
+        downloadDomainSchema(domainKey, schemaEdits ?? [], data.format, data.fileName)
             .then((blob: Blob) => {
                 downloadFile(blob, `${data.fileName}.${data.format}`)
                 toast.success(`${data.fileName}.${data.format} downloaded successfully.`);

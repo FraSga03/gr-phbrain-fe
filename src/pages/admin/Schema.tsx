@@ -377,7 +377,7 @@ export default function Schema() {
                         </div>
 
                         <div className="flex justify-end gap-2">
-                            <SchemaHandler setUploadedFile={setUploadedFile} />
+                            <SchemaHandler uploadedFile={uploadedFile} setUploadedFile={setUploadedFile} schemaEdits={schemaEdits} />
                         </div>
                     </div>
                 </Card>

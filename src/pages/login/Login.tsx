@@ -7,9 +7,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { withSubmitLock } from "../../utils/withSubmitLock.ts";
 import { login } from "../../service/AuthService.ts";
+import { useAuth } from "../../context/AuthContext.tsx";
 
 export default function Login() {
     const navigate = useNavigate();
+    const { refresh } = useAuth();
     const {
         register,
         handleSubmit,
@@ -22,6 +24,7 @@ export default function Login() {
 
     const onSubmit = withSubmitLock(async (data: LoginForm) => {
         login(data.username, data.password)
+            .then(() => refresh())
             .then(() => navigate("/admin"))
             .catch(() => reset());
     });
