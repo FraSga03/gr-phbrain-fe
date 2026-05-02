@@ -7,6 +7,10 @@ React 19 + TypeScript + Vite single-page app. Talks to a backend at `http://loca
 - Node.js **20.x**
 - npm 10+
 
+## Setup
+
+- `cp .env.example .env` — create your local env file (edit values as needed)
+
 ## Run locally
 
 - `npm install` — install dependencies
