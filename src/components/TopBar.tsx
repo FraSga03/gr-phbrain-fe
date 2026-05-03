@@ -1,5 +1,5 @@
 import Select from "./Select.tsx";
-import { useDomain } from "../context/DomainContext.tsx";
+import { useDomain } from "../contexts/DomainContext.tsx";
 import { useMemo } from "react";
 import type { Option } from "../types/Select.ts";
 

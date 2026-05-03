@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode, useMemo } from "react";
 import type { User } from "../types/Auth.ts";
-import { getMe } from "../service/AuthService.ts";
+import { getMe } from "../services/AuthService.ts";
 
 type AuthContextValue = {
     user: User | undefined;

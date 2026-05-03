@@ -9,11 +9,11 @@ import { type SuggestionForm, suggestionSchema } from "../../schemas/SuggestionF
 import Button from "../../components/Button";
 import TextArea from "../../components/TextArea";
 import { useEffect, useState } from "react";
-import { getUserCredit, getUserContributions, getUserRanking } from "../../service/RankService.ts";
+import { getUserCredit, getUserContributions, getUserRanking } from "../../services/RankService.ts";
 import type { PaginatedResult } from "../../types/Paginate.ts";
-import { saveSuggestion } from "../../service/HelpService.ts";
+import { saveSuggestion } from "../../services/HelpService.ts";
 import toast from "react-hot-toast";
-import { useAuth } from "../../context/AuthContext.tsx";
+import { useAuth } from "../../contexts/AuthContext.tsx";
 
 export default function Dashboard() {
     const [contributions, setContributions] = useState<Contribution[]>([]);

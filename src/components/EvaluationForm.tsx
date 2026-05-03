@@ -5,7 +5,7 @@ import Button from "./Button";
 import Select from "./Select";
 import TextArea from "./TextArea";
 import toast from "react-hot-toast";
-import { evaluateInstance } from "../service/DomainService.ts";
+import { evaluateInstance } from "../services/DomainService.ts";
 import type { ClassNode } from "../types/ClassNode.ts";
 
 type EvaluationFormProps = {

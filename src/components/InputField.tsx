@@ -40,7 +40,7 @@ export default function Input({
                     <button
                         type="button"
                         onClick={() => setShowPassword((v) => !v)}
-                        className="absolute inset-y-0 right-0 flex items-center px-3! py-0! bg-gray-500! m-1 text-gray-500 hover:text-gray-700 cursor-pointer"
+                        className="absolute inset-y-0 right-0 flex items-center px-3! py-0! bg-gray-400! m-1 text-gray-500 hover:text-gray-700 cursor-pointer"
                     >
                         {showPassword ? <FaEyeSlash /> : <FaEye />}
                     </button>

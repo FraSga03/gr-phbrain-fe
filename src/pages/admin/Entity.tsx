@@ -1,11 +1,11 @@
 import Card from "../../components/Card.tsx";
-import { useDomain } from "../../context/DomainContext.tsx";
-import { useSelection } from "../../context/SelectionContext.tsx";
+import { useDomain } from "../../contexts/DomainContext.tsx";
+import { useSelection } from "../../contexts/SelectionContext.tsx";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { Option } from "../../types/Select.ts";
 import type { ClassNode } from "../../types/ClassNode.ts";
-import { getInstanceByIdAndDomain, getSubclasses } from "../../service/DomainService.ts";
+import { getInstanceByIdAndDomain, getSubclasses } from "../../services/DomainService.ts";
 import EvaluationForm from "../../components/EvaluationForm.tsx";
 import RecordForm from "../../components/RecordForm.tsx";
 import type { Record } from "../../types/Record.ts";
@@ -13,8 +13,8 @@ import AttachmentsForm from "../../components/AttachmentsForm.tsx";
 import ClassSelector from "../../components/ClassSelector.tsx";
 import InstanceSelector from "../../components/InstanceSelector.tsx";
 import type { InstanceButton } from "../../components/InstanceSelector.tsx";
-import { buildRelationshipParams } from "../../context/RelationshipContext.tsx";
-import { useGraph } from "../../context/GraphContext.tsx";
+import { buildRelationshipParams } from "../../contexts/RelationshipContext.tsx";
+import { useGraph } from "../../contexts/GraphContext.tsx";
 
 export default function Entity() {
     const navigate = useNavigate();

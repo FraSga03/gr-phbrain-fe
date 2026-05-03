@@ -4,7 +4,7 @@ import {
     Navigate,
 } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import { AuthProvider } from "./context/AuthContext.tsx";
+import { AuthProvider } from "./contexts/AuthContext.tsx";
 
 import Login from "./pages/login/Login";
 import Admin from "./pages/admin/Admin";
@@ -16,7 +16,7 @@ import Prolog from "./pages/admin/Prolog";
 import Help from "./pages/admin/Help";
 import Relationship from "./pages/admin/Relationship.tsx";
 import Profile from "./pages/admin/Profile.tsx";
-import { SchemaProvider } from "./context/SchemaContext.tsx";
+import { SchemaProvider } from "./contexts/SchemaContext.tsx";
 
 const router = createBrowserRouter([
     {

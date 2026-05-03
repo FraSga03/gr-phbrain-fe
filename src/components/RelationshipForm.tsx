@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ClassNode } from "../types/ClassNode";
-import { editRelationship, getPossibleRelationships, getRelationshipById, getRelationshipInstance, saveRelationship } from "../service/RelationshipService.ts";
+import { editRelationship, getPossibleRelationships, getRelationshipById, getRelationshipInstance, saveRelationship } from "../services/RelationshipService.ts";
 import type { Option } from "../types/Select.ts";
 import Select from "./Select.tsx";
 import type { Relationship, RelationshipInstance } from "../types/Relationship.ts";
@@ -9,7 +9,7 @@ import Button from "./Button.tsx";
 import { useForm, type FieldError } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useGraph } from "../context/GraphContext.tsx";
+import { useGraph } from "../contexts/GraphContext.tsx";
 
 type RelationshipFormProps = {
     subject: ClassNode;
@@ -220,7 +220,7 @@ export default function RelationshipForm({ subject, object, domain, onRelationsh
                             </div>
                         </form>
                     ) : (
-                        <div>Select an instance to edit or select a class for edit</div>
+                        <div>Select an instance to edit or select a class</div>
                     )}
                 </div>
             }

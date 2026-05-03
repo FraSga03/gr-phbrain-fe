@@ -1,4 +1,4 @@
-import { useAuth } from "../../context/AuthContext.tsx";
+import { useAuth } from "../../contexts/AuthContext.tsx";
 
 export default function Help() {
     const { user } = useAuth();

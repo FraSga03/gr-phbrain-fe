@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 import { type ChangePasswordForm, changePasswordSchema } from "../schemas/ChangePasswordForm.ts";
-import { changePassword } from "../service/AuthService.ts";
+import { changePassword } from "../services/AuthService.ts";
 import { withSubmitLock } from "../utils/withSubmitLock.ts";
 import Input from "./InputField";
 import Button from "./Button";

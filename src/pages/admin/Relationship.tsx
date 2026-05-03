@@ -1,13 +1,13 @@
 import Card from "../../components/Card.tsx";
-import { useDomain } from "../../context/DomainContext.tsx";
+import { useDomain } from "../../contexts/DomainContext.tsx";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { Option } from "../../types/Select.ts";
-import { getSubclasses } from "../../service/DomainService.ts";
+import { getSubclasses } from "../../services/DomainService.ts";
 import ClassSelector from "../../components/ClassSelector.tsx";
 import InstanceSelector from "../../components/InstanceSelector.tsx";
-import { useRelationship, buildRelationshipParams } from "../../context/RelationshipContext.tsx";
-import { useGraph } from "../../context/GraphContext.tsx";
+import { useRelationship, buildRelationshipParams } from "../../contexts/RelationshipContext.tsx";
+import { useGraph } from "../../contexts/GraphContext.tsx";
 import type { ClassNode } from "../../types/ClassNode.ts";
 import { FaArrowRightArrowLeft } from "react-icons/fa6";
 import RelationshipForm from "../../components/RelationshipForm.tsx";

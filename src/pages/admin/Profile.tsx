@@ -1,5 +1,5 @@
 import Card from "../../components/Card";
-import { useAuth } from "../../context/AuthContext.tsx";
+import { useAuth } from "../../contexts/AuthContext.tsx";
 import { useState } from "react";
 import Button from "../../components/Button";
 import Modal from "../../components/Modal";

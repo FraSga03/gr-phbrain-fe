@@ -10,9 +10,9 @@ import { downloadSchema, type DownloadForm } from "../schemas/DownloadForm.ts";
 import { uploadSchema, type UploadForm } from "../schemas/UploadForm.ts";
 import { extractGraphSchema, type ExtractGraphForm } from "../schemas/ExtractGraphForm.ts";
 import type { SchemaEdit, UploadedFile } from "../types/Schema.ts";
-import { downloadDomainSchema, upload } from "../service/DomainService.ts";
-import { downloadGraph } from "../service/GraphService.ts";
-import { useDomain } from "../context/DomainContext.tsx";
+import { downloadDomainSchema, upload } from "../services/DomainService.ts";
+import { downloadGraph } from "../services/GraphService.ts";
+import { useDomain } from "../contexts/DomainContext.tsx";
 import { downloadFile } from "../utils/downloadFile.ts";
 import toast from "react-hot-toast";
 

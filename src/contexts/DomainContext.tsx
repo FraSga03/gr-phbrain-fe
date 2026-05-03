@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { getAll } from "../service/DomainService.ts";
+import { getAll } from "../services/DomainService.ts";
 import { useSearchParams } from "react-router-dom";
 
 type DomainContextValue = {

@@ -6,8 +6,8 @@ import { type LoginForm, loginSchema } from "../../schemas/LoginForm.ts";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { withSubmitLock } from "../../utils/withSubmitLock.ts";
-import { login } from "../../service/AuthService.ts";
-import { useAuth } from "../../context/AuthContext.tsx";
+import { login } from "../../services/AuthService.ts";
+import { useAuth } from "../../contexts/AuthContext.tsx";
 
 export default function Login() {
     const navigate = useNavigate();

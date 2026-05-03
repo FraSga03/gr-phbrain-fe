@@ -6,14 +6,14 @@ import type { RouteObject, UIMatch } from "react-router";
 import { useMatches, useNavigate } from "react-router-dom";
 import { Outlet } from "react-router-dom";
 import { useEffect } from "react";
-import { useAuth } from "../../context/AuthContext.tsx";
+import { useAuth } from "../../contexts/AuthContext.tsx";
 import TopBar from "../../components/TopBar.tsx";
 import Spinner from "../../components/Spinner.tsx";
-import { DomainProvider } from "../../context/DomainContext.tsx";
-import { SelectionProvider } from "../../context/SelectionContext.tsx";
-import { RelationshipProvider } from "../../context/RelationshipContext.tsx";
-import { GraphProvider } from "../../context/GraphContext.tsx";
-import { UIProvider } from "../../context/UIProviderContext.tsx";
+import { DomainProvider } from "../../contexts/DomainContext.tsx";
+import { SelectionProvider } from "../../contexts/SelectionContext.tsx";
+import { RelationshipProvider } from "../../contexts/RelationshipContext.tsx";
+import { GraphProvider } from "../../contexts/GraphContext.tsx";
+import { UIProvider } from "../../contexts/UIProviderContext.tsx";
 
 const sidebarItems = [
     { label: "Dashboard", icon: <FaHome size={20} />, path: "/admin" },

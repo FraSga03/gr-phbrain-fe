@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 import FileInput from "./FileInput.tsx";
 import InputField from "./InputField.tsx";
 import Button from "./Button.tsx";
-import { saveFile } from "../service/DomainService.ts";
+import { saveFile } from "../services/DomainService.ts";
 
 type AttachmentsFormProps = {
     attachments: Attachment[];

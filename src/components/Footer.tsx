@@ -1,8 +1,8 @@
 import { FaChevronLeft, FaSignOutAlt } from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext.tsx";
-import { useUI } from "../context/UIProviderContext.tsx";
-import { logout as logoutService } from "../service/AuthService.ts";
+import { useAuth } from "../contexts/AuthContext.tsx";
+import { useUI } from "../contexts/UIProviderContext.tsx";
+import { logout as logoutService } from "../services/AuthService.ts";
 
 export default function Footer() {
     const navigate = useNavigate();

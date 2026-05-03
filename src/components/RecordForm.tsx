@@ -6,7 +6,7 @@ import Select from "./Select";
 import Button from "./Button";
 import toast from "react-hot-toast";
 import type { Record } from "../types/Record.ts";
-import { saveInstance as saveInstanceAPI, editInstance as editInstanceAPI } from "../service/DomainService.ts";
+import { saveInstance as saveInstanceAPI, editInstance as editInstanceAPI } from "../services/DomainService.ts";
 
 type RecordFormProps = {
     selectedInstance: Record | null;
@@ -118,7 +118,7 @@ export default function RecordForm({ selectedInstance, currentClass, currentDoma
                     </div>
                 </form>
             ) : (
-                <div>Select an instance to edit or select a class for edit</div>
+                <div>Select an instance to edit or select a class</div>
             )}
         </>
     );

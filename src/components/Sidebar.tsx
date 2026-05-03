@@ -1,7 +1,7 @@
 import SidebarItem from "./SidebarItem";
 import type { ReactNode } from "react";
 import type { SidebarItemConfig } from "../types/SidebarItemConfig.ts";
-import { useUI } from "../context/UIProviderContext.tsx";
+import { useUI } from "../contexts/UIProviderContext.tsx";
 
 type SidebarProps = {
     items: SidebarItemConfig[];

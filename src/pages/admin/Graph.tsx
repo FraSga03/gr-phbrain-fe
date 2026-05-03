@@ -2,15 +2,15 @@ import { useState, useCallback, useEffect } from 'react';
 import { applyNodeChanges, applyEdgeChanges, addEdge, type NodeChange, type EdgeChange, type Connection } from '@xyflow/react';
 import type { GraphNode, GraphEdge } from "../../types/GraphFlow.ts";
 import Card from "../../components/Card";
-import { useGraph } from "../../context/GraphContext.tsx";
+import { useGraph } from "../../contexts/GraphContext.tsx";
 import type { Instance } from "../../types/Instance.ts";
 import type { RelationshipInstance } from "../../types/Relationship.ts";
-import { getInstanceByIdAndDomain } from "../../service/DomainService.ts";
-import { useDomain } from "../../context/DomainContext.tsx";
-import { getRelationshipInstance } from "../../service/RelationshipService.ts";
+import { getInstanceByIdAndDomain } from "../../services/DomainService.ts";
+import { useDomain } from "../../contexts/DomainContext.tsx";
+import { getRelationshipInstance } from "../../services/RelationshipService.ts";
 import type { Column } from "../../types/Table.ts";
 import Table from "../../components/Table.tsx";
-import { generateGraph, getNodeCentrality, getNodeLinkPrediction } from "../../service/GraphService.ts";
+import { generateGraph, getNodeCentrality, getNodeLinkPrediction } from "../../services/GraphService.ts";
 import GraphCanvas from "../../components/GraphCanvas.tsx";
 import { assignParallelEdgeOffsets, layoutWithDagre } from "../../utils/graphLayout.ts";
 import GraphProperties from "../../components/GraphProperties.tsx";
@@ -134,7 +134,11 @@ export default function Graph() {
 
     useEffect(() => {
         if (!selectedDomain) return;
-        if (!selectedInstances.length && !selectedRelationships.length) return;
+        if (!selectedInstances.length && !selectedRelationships.length) {
+            setNodes([]);
+            setEdges([]);
+            return;
+        }
 
         generateGraph(selectedDomain, selectedInstances, selectedRelationships)
             .then(res => {
