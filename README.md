@@ -7,10 +7,6 @@ React 19 + TypeScript + Vite single-page app. Talks to a backend at `http://loca
 - Node.js **20.x**
 - npm 10+
 
-## Setup
-
-- `cp .env.example .env` — create your local env file (edit values as needed)
-
 ## Run locally
 
 - `npm install` — install dependencies
@@ -18,6 +14,12 @@ React 19 + TypeScript + Vite single-page app. Talks to a backend at `http://loca
 - `npm run build` — typecheck and produce a production build in `dist/`
 - `npm run lint` — run ESLint
 - `npm run preview` — preview the production build
+
+## Environment variables
+
+Create a `.env` (or `.env.development` / `.env.production`) at the repo root. Only `VITE_`-prefixed vars reach the client and are inlined at build time — rebuild after changes.
+
+- `VITE_API_BASE_URL` — backend API base URL (default `http://localhost:5000/api`)
 
 ## Run with Docker
 

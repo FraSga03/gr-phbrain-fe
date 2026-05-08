@@ -48,7 +48,7 @@ export default function Footer() {
                 {!collapsed && (
                     <div className="flex flex-col justify-between grow h-full select-none">
                         <div
-                            onClick={() => navigate("/admin/profile")}
+                            onClick={() => navigate("/admin/profile" + location.search)}
                             className="cursor-pointer hover:text-accent transition"
                         >
                             {user?.username}

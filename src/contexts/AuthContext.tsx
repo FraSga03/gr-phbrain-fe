@@ -19,7 +19,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [error, setError] = useState(false);
 
     const profilePicture = useMemo(
-        () => user ?
+        () => user?.username ?
             `https://ui-avatars.com/api/?name=${user.username.at(0)}${user.username.at(-1)}&background=1e40af&color=fff`
             : null,
         [user]
