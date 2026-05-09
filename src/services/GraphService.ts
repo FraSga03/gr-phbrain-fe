@@ -3,13 +3,13 @@ import type { Graph } from "../types/Graph.ts";
 
 const BASE_PATH = "/graphs";
 
-export async function getNodeCentrality(domain: string, instanceId: string, algorithm: string) {
-    const res = await api.get<number>(`${BASE_PATH}/${domain}/centrality/${instanceId}/${algorithm}`);
+export async function getNodeCentrality(domain: string, instanceId: string, algorithm: string, args: Record<string, unknown> = {}) {
+    const res = await api.post<number>(`${BASE_PATH}/${domain}/centrality/${instanceId}/${algorithm}`, args);
     return res.data;
 }
 
-export async function getNodeLinkPrediction(domain: string, instanceId: string, algorithm: string) {
-    const res = await api.get<number>(`${BASE_PATH}/${domain}/link-prediction/${instanceId}/${algorithm}`);
+export async function getNodeLinkPrediction(domain: string, instanceId: string, algorithm: string, args: Record<string, unknown> = {}) {
+    const res = await api.post<number>(`${BASE_PATH}/${domain}/link-prediction/${instanceId}/${algorithm}`, args);
     return res.data;
 }
 
